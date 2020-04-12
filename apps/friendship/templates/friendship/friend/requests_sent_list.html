@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container">
+    <ul>
+    {% for friendship_request in requests %}
+    <div class="card w-75">
+      <div class="card-body">
+        <h5 class="card-title">{{friendship_request.to_user.first_name}} {{friendship_request.to_user.last_name}}</h5>
+        <img class="mr-3 rounded float-left" src="{{friendship_request.to_user.profile.profile_pic.url}}" alt="https://static-prod.testony.com/img/defaultavatar-8ab1ea5e26.jpg">
+
+        <form method="post" action="{% url 'friendship:friendship_cancel' friendship_request.pk %}" style="display:inline-block;">
+        {% csrf_token %}
+        <input type="submit" class="btn btn-outline-danger" value="Cancel Request" />
+        </form>
+      </div>
+    </div>
+
+    {% empty %}
+    </ul>
+    <div><h3>No requests!</h3></div>
+    {% endfor %}
+  </div>
+{% endblock %}
