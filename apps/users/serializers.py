@@ -13,4 +13,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username','first_name', 'last_name', 'email', 'is_merchant', 'mobile_number' ]
+        fields = ['username','first_name', 'last_name', 'email',  'mobile_number' ]
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
+
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email',  'mobile_number', 'bio', 
+                    'profile_picture', 'date_joined', 'id' ]
+
+
+

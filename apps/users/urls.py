@@ -7,13 +7,16 @@ from django.conf import settings
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
-from .views import (UserDetails,)
+from .views import (UserDetails,UserProfile)
 
 urlpatterns = [
     
     url(r'^details/(?P<pk>[\w-]+)/$',
             view = UserDetails.as_view(),
              name="user_details" ),
+    path('profile/<userId>/',
+            view = UserProfile.as_view(),
+             name="user_profile" ),
              
 
 

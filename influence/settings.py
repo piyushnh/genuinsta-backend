@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
 
     #django-channels
-    'channels',
+    # 'channels',
 
     'debug_toolbar',
     'corsheaders',
@@ -63,11 +63,8 @@ INSTALLED_APPS = [
 
     'apps.users',
     'apps.friendship',
-    'apps.restaurants',
-    'apps.paytm',
     'apps.socialAuth',
     'apps.user_profile',
-    'apps.restaurant_merchants',
 
 
 ] + SOCIAL_AUTH_INSTALLED_APPS
@@ -160,9 +157,9 @@ WSGI_APPLICATION = 'influence.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'foodie',
-        'USER': 'foodieuser',
-        'PASSWORD': 'piyush1235',
+        'NAME': 'sway',
+        'USER': 'swayuser',
+        'PASSWORD': 'swayuser',
         'HOST': 'localhost',
         'PORT': '',
 
@@ -203,6 +200,8 @@ USE_L10N = True
 USE_TZ = False
 
 
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
@@ -237,6 +236,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 # Eliminate need to provide username, as it's a very old practice
 ACCOUNT_USERNAME_REQUIRED = False
 OLD_PASSWORD_FIELD_ENABLED = True
+USER_MODEL_USERNAME_FIELD = True
 
 JWT_AUTH = {
     # Authorization:Token xxx
@@ -249,15 +249,15 @@ GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")
 
 
 #stuff required for django-channels
-ASGI_APPLICATION = "influence.routing.application"
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
-}
+# ASGI_APPLICATION = "influence.routing.application"
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             "hosts": [('127.0.0.1', 6379)],
+#         },
+#     },
+# }
 
 #stuff required for caching
 CACHES = {

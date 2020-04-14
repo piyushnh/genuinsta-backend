@@ -18,7 +18,7 @@ from rest_framework.generics import (
     # UpdateAPIView
 )
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserProfileSerializer
 
 try:
     from django.contrib.auth import get_user_model
@@ -30,3 +30,14 @@ class UserDetails(RetrieveAPIView):
     serializer_class = UserSerializer
     permission_classes = (IsAuthenticated, )
     queryset = User.objects.all()
+
+class UserProfile(RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = (IsAuthenticated, )
+    
+    def get_object(self):
+        user_id = self.kwargs['userId']
+        user = User.objects.get(username=user_id)
+
+        return user
+
