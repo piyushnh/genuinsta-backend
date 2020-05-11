@@ -10,8 +10,17 @@ except ImportError:
 from django.shortcuts import render, get_object_or_404, redirect
 
 #rest_framework imports
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+
+#To integrate channels
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+channel_layer = get_channel_layer()
+
+from apps.users.serializers import UserProfileSerializer
 
 from .exceptions import AlreadyExistsError
 from .models import Friend, Follow, FriendshipRequest
@@ -21,8 +30,8 @@ from .serializers import (FriendshipRequestSerializer, FriendSerializer,
 get_friendship_context_object_name = lambda: getattr(settings, 'FRIENDSHIP_CONTEXT_OBJECT_NAME', 'user')
 get_friendship_context_object_list_name = lambda: getattr(settings, 'FRIENDSHIP_CONTEXT_OBJECT_LIST_NAME', 'users')
 
-@login_required
 @api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
 def view_friends(request, username):
     """ View the friends of a user """
     user = get_object_or_404(user_model, username=username)
@@ -31,21 +40,22 @@ def view_friends(request, username):
     return Response(serializer.data)
 
 
-@login_required
 @api_view(['POST'])
-def friendship_add_friend(request, to_username, template_name='friendship/friend/add.html'):
+@permission_classes((IsAuthenticated, ))
+def friendship_add_friend(request, to_userId):
     """ Create a FriendshipRequest """
-    ctx = {'to_username': to_username}
+    # ctx = {'to_username': to_username}
 
-    if request.method == 'POST':
-        to_user = user_model.objects.get(username=to_username)
-        from_user = request.user
-        try:
-            Friend.objects.add_friend(from_user, to_user)
-        except AlreadyExistsError as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(status=status.HTTP_201_CREATED)
+    to_user = user_model.objects.get(user_id=to_userId)
+    from_user = request.user
+    try:
+        Friend.objects.add_friend(from_user, to_user)
+        async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "friend.request.received", 'request_data': UserProfileSerializer(from_user).data})
+
+    except AlreadyExistsError as e:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    return Response(status=status.HTTP_201_CREATED)
 
 
 @login_required
@@ -163,22 +173,26 @@ def following(request, username, template_name='friendship/follow/following_list
     })
 
 
-@login_required
-def follower_add(request, followee_username, template_name='friendship/follow/add.html'):
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def follower_add(request):
     """ Create a following relationship """
-    ctx = {'followee_username': followee_username}
 
     if request.method == 'POST':
-        followee = user_model.objects.get(username=followee_username)
+        data = request.data
+        followee_userId = data['userId']
+        followee = user_model.objects.get(user_id=followee_userId)
         follower = request.user
         try:
             Follow.objects.add_follower(follower, followee)
-        except AlreadyExistsError as e:
-            ctx['errors'] = ["%s" % e]
-        else:
-            return redirect('friendship:friendship_following', username=follower.username)
+            return Response(status=status.HTTP_200_OK)
 
-    return render(request, template_name, ctx)
+        except Exception as e:
+            print(e)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        
+
 
 
 @login_required

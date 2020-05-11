@@ -462,3 +462,26 @@ class Follow(models.Model):
         if self.follower == self.followee:
             raise ValidationError("Users cannot follow themselves.")
         super(Follow, self).save(*args, **kwargs)
+
+@python_2_unicode_compatible
+class Follow(models.Model):
+    """ Model to represent Circles """
+    follower = models.ForeignKey(AUTH_USER_MODEL, related_name='following', on_delete=models.CASCADE)
+    followee = models.ForeignKey(AUTH_USER_MODEL, related_name='followers', on_delete=models.CASCADE)
+    created = models.DateTimeField(default=timezone.now)
+
+    objects = FollowingManager()
+
+    class Meta:
+        verbose_name = _('Following Relationship')
+        verbose_name_plural = _('Following Relationships')
+        unique_together = ('follower', 'followee')
+
+    def __str__(self):
+        return "User #%s follows #%s" % (self.follower_id, self.followee_id)
+
+    def save(self, *args, **kwargs):
+        # Ensure users can't be friends with themselves
+        if self.follower == self.followee:
+            raise ValidationError("Users cannot follow themselves.")
+        super(Follow, self).save(*args, **kwargs)

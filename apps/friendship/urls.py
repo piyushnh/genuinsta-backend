@@ -71,7 +71,7 @@ urlpatterns = [
         name='friendship_following',
     ),
     url(
-        regex=r'^follower/add/(?P<followee_username>[\w-]+)/$',
+        regex=r'^follower/add/$',
         view=follower_add,
         name='follower_add',
     ),

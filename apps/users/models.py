@@ -25,4 +25,12 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return "{}".format(self.email)
 
+    @property
+    def group_name(self):
+        """
+        Returns a group name based on the user's id to be used by Django Channels.
+      
+        """
+        return "user_%s" % self.user_id
+
 
