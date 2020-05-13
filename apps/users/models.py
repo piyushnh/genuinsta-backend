@@ -18,6 +18,18 @@ class CustomUser(AbstractUser):
     bio  = models.CharField(max_length=500, blank=True, null=True)
     user_id = models.CharField(max_length=500, unique=True, )
 
+    ACCOUNT_TYPE_CHOICES = (
+    ("PUBLIC", "public"),
+    ("PRIVATE", "private"),
+    
+)
+    account_type = models.CharField(max_length=7,
+                  choices=ACCOUNT_TYPE_CHOICES,
+                  default="PRIVATE")
+    email_verified = models.BooleanField(default = False)              
+
+
+
 
 
 

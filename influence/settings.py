@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     'apps.friendship',
     'apps.socialAuth',
     'apps.user_profile',
+    'apps.groups',
+    'apps.posts',
 
 
 ] + SOCIAL_AUTH_INSTALLED_APPS
