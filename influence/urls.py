@@ -30,6 +30,7 @@ urlpatterns = [
     url(r'^friendship/', include('apps.friendship.urls')),
     url(r'^auth/', include('apps.socialAuth.urls')),
     url(r'^user/', include('apps.users.urls')),
+    url(r'^post/', include('apps.posts.urls')),
     url(r'^$', views.HomeView.as_view(), name='home'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

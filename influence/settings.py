@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
 
+    'smartfields',
+
     #authentication packages
     'rest_framework.authtoken',
     'rest_auth',
@@ -64,7 +66,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.friendship',
     'apps.socialAuth',
-    'apps.user_profile',
+    # 'apps.user_profile',
     'apps.groups',
     'apps.posts',
 
@@ -164,6 +166,7 @@ DATABASES = {
         'PASSWORD': 'swayuser',
         'HOST': 'localhost',
         'PORT': '',
+        # 'OPTIONS': {'charset': 'utf8mb4'},
 
     }
 }
@@ -271,6 +274,9 @@ CACHES = {
         },
     }
 }
+
+
+# THUMBNAIL_KVSTORE = 'sorl.thumbnail.kvstores.redis_kvstore.KVStore'
 
 # Cache time to live is 5 hours.
 CACHE_TTL = 60 * 60 * 24

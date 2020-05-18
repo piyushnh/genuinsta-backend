@@ -1,4 +1,5 @@
 from django.db import models
+import logging
 try:
     from django.contrib.auth import get_user_model
     User = get_user_model()
@@ -6,6 +7,10 @@ except ImportError:
     from django.contrib.auth.models import User
 
 from apps.groups.models import Group
+from sorl.thumbnail import  get_thumbnail
+from smartfields import fields
+from smartfields.dependencies import FileDependency
+from smartfields.processors import ImageProcessor
 
 
 # Create your models here.
@@ -14,13 +19,22 @@ class Post(models.Model):
     post_id = models.CharField(primary_key=True, max_length = 15)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts',  )
     description = models.TextField(null = False)
-    imgSrc = models.ImageField(upload_to = 'media/post_pics',blank=False ) 
+    image = fields.ImageField(upload_to='post', dependencies=[
+        FileDependency( processor=ImageProcessor(
+            format='JPEG', scale={'max_width': 640, 'max_height': 320})),
+    ]) 
     post_time = models.DateTimeField(auto_now_add=True, null=False)
     location = models.TextField(null=True)
 
 
     def __str__(self):
-        return str(self.user)
+        return str(self.post_id)
+
+
+        
+    #  def is_liked_or_not(self, userId):
+    #     return Like.objects.filter(post = self.post_id, user = userIf).exists()
+    # liked_or_not = property(is_liked_or_not)    
 
     def save(self, *args, **kwargs):
         while not self.post_id:
@@ -28,6 +42,8 @@ class Post(models.Model):
 
             if not Post.objects.filter(post_id = newId).exists():
                 self.post_id = newId
+        # if self.imgSrc:
+        #     self.imgSrc = get_thumbnail(self.imgSrc, '640x320', quality=99, format='JPEG').name
 
         super().save(*args, **kwargs)
 
@@ -44,7 +60,7 @@ class PostTags(models.Model):
         while not self.post_tag_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(post_tag_id = newId).exists():
+            if not PostTags.objects.filter(post_tag_id = newId).exists():
                 self.post_tag_id = newId
 
         super().save(*args, **kwargs)
@@ -63,7 +79,7 @@ class ProfileViews(models.Model):
         while not self.view_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(view_id = newId).exists():
+            if not ProfileViews.objects.filter(view_id = newId).exists():
                 self.view_id = newId
 
         super().save(*args, **kwargs)
@@ -82,15 +98,16 @@ class Recommendation(models.Model):
         while not self.recommend_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(recommend_id = newId).exists():
+            if not Recommendation.objects.filter(recommend_id = newId).exists():
                 self.recommend_id = newId
 
         super().save(*args, **kwargs)
 
-class Tags(models.Model):
+class Tag(models.Model):
     tag_id = models.CharField(primary_key=True, max_length = 15)
-    tag = models.CharField(max_length=255, blank=False, null=False)
+    post = models.CharField(max_length=255, blank=False, null=False)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='tags',  )
+    post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='tags',  )
 
     def __str__(self):
         return str(self.view_id)
@@ -99,15 +116,15 @@ class Tags(models.Model):
         while not self.tag_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(tag_id = newId).exists():
+            if not Tag.objects.filter(tag_id = newId).exists():
                 self.tag_id = newId
 
         super().save(*args, **kwargs)
 
 class HashTag(models.Model):
     hashtag_id = models.CharField(primary_key=True, max_length = 15)
-    post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='hashtags',  )
-    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='hashtags',  )
+    posts = models.ManyToManyField(Post,related_name='hashtags',  )
+    # user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='hashtags',  )
     hashtag_time = models.DateTimeField(auto_now_add=True, null=False)
     hashtag = models.CharField(max_length=1000, blank=False, null=False)
      
@@ -119,7 +136,7 @@ class HashTag(models.Model):
         while not self.hashtag_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(hashtag_id = newId).exists():
+            if not HashTag.objects.filter(hashtag_id = newId).exists():
                 self.hashtag_id = newId
 
         super().save(*args, **kwargs)
@@ -132,15 +149,71 @@ class Like(models.Model):
      
 
     def __str__(self):
-        return str(self.post_tag_id)
+        return str(self.like_id)
+
+   
 
     def save(self, *args, **kwargs):
         while not self.like_id:
             newId = str(uuid.uuid4()).replace('-','')[0:10]
 
-            if not Post.objects.filter(like_id = newId).exists():
+            if not Like.objects.filter(like_id = newId).exists():
                 self.like_id = newId
 
+
         super().save(*args, **kwargs)
+
+class Comment(models.Model):
+    comment_id = models.CharField(primary_key=True, max_length = 15)
+    post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='comments',  )
+    comment_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='comments',  )
+    comment_time = models.DateTimeField(auto_now_add=True, null=False)
+    COMMENT_TYPE_CHOICES = (
+    ("TEXT", "text"),
+    ("IMAGE", "image"),
+    ("STICKER", "sticker"),)
+    comment_type = models.CharField(max_length=7,
+                  choices=COMMENT_TYPE_CHOICES,
+                  default="TEXT")
+    text = models.TextField(null = True)
+    #In case of sticker or image, the url will be in this 
+    commentSrc = models.ImageField(upload_to='comment_images_stickers')
+     
+
+    def __str__(self):
+        return str(self.comment_id)
+
+    def save(self, *args, **kwargs):
+        while not self.comment_id:
+            newId = str(uuid.uuid4()).replace('-','')[0:10]
+
+            if not Comment.objects.filter(comment_id = newId).exists():
+                self.comment_id = newId
+
+
+        super().save(*args, **kwargs)
+
+class Bookmark(models.Model):
+    bookmark_id = models.CharField(primary_key=True, max_length = 15)
+    post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='bookmarks',  )
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='bookmarks',  )
+    bookmark_time = models.DateTimeField(auto_now_add=True, null=False)
+     
+
+    def __str__(self):
+        return str(self.bookmark_id)
+
+    def save(self, *args, **kwargs):
+        while not self.bookmark_id:
+            newId = str(uuid.uuid4()).replace('-','')[0:10]
+
+            if not Bookmark.objects.filter(bookmark_id = newId).exists():
+                self.bookmark_id = newId
+
+
+        super().save(*args, **kwargs)
+
+
+
 
 
