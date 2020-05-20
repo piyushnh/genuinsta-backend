@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
     )
     profile_picture = models.ImageField(upload_to = 'profile_pictures', null = True)
     bio  = models.CharField(max_length=500, blank=True, null=True)
-    user_id = models.CharField(max_length=500, unique=True, )
+    user_id = models.CharField(max_length=500, unique=True, primary_key=True,)
 
     ACCOUNT_TYPE_CHOICES = (
     ("PUBLIC", "public"),

@@ -56,11 +56,11 @@ INSTALLED_APPS = [
 
     #authentication packages
     'rest_framework.authtoken',
-    'rest_auth',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'rest_auth.registration',
+    # 'rest_auth',
+    # 'allauth',
+    # 'allauth.account',
+    # 'allauth.socialaccount',
+    # 'rest_auth.registration',
 
      'phonenumber_field',
 
@@ -113,8 +113,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.request',
-                'social_django.context_processors.backends',
-                'social_django.context_processors.login_redirect',
+                # 'social_django.context_processors.backends',
+                # 'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -171,9 +171,9 @@ WSGI_APPLICATION = 'influence.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'sway',
-        'USER': 'swayuser',
-        'PASSWORD': 'swayuser',
+        'NAME': 'genuinsta',
+        'USER': 'piyush',
+        'PASSWORD': 'piyush1235',
         'HOST': 'localhost',
         'PORT': '',
         # 'OPTIONS': {'charset': 'utf8mb4'},
