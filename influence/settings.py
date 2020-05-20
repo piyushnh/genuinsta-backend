@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'rest_framework',
 
     'smartfields',
+    'guardian',
 
     #authentication packages
     'rest_framework.authtoken',
@@ -69,9 +70,15 @@ INSTALLED_APPS = [
     # 'apps.user_profile',
     'apps.groups',
     'apps.posts',
+    
+
+    #Importing App Configs
+    # 'apps.posts.apps.PostsConfig'
+
+    'stream_django',
 
 
-] + SOCIAL_AUTH_INSTALLED_APPS
+] 
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -117,12 +124,15 @@ AUTHENTICATION_BACKENDS = (
     # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
 
-    #needed for social authentication
-    'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
+    # #needed for social authentication
+    # 'social_core.backends.google.GoogleOAuth2',
+    # 'social_core.backends.facebook.FacebookOAuth2',
 
     # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
+
+    # Required by `django-guardians`
+     'guardian.backends.ObjectPermissionBackend',
 
 )
 
@@ -280,3 +290,16 @@ CACHES = {
 
 # Cache time to live is 5 hours.
 CACHE_TTL = 60 * 60 * 24
+
+# CELERY STUFF
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'Africa/Nairobi'
+
+
+#Getstream credentials
+STREAM_API_KEY = 'z92y85wanjxs'
+STREAM_API_SECRET = 'cetqe7gf26pzuv7nmxdkg3qym444ktdwr57z6ru9czrypcfbd2h94src3rjn54ts'

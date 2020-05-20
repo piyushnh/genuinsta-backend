@@ -7,7 +7,8 @@ from django.conf import settings
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
-from .views import (get_post, get_user_bookmarks, like_unlike_post, get_user_posts )
+from .views import (get_post, get_user_bookmarks, like_unlike_post, 
+                        get_user_posts, publish_post, modify_post )
 
 urlpatterns = [
     
@@ -25,6 +26,12 @@ urlpatterns = [
     path('likeUnlikePost/<postId>/',
             view = like_unlike_post,
              name="like_unlike_post" ),
+    path('publishPost/',
+            view = publish_post,
+             name="publish_post" ),
+    path('modifyPost/<postId>/',
+            view = modify_post,
+             name="modify_post" ),
     
              
 

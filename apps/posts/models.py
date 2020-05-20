@@ -6,12 +6,19 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
 
+from stream_django.activity import Activity
+
+
 from apps.groups.models import Group
 from sorl.thumbnail import  get_thumbnail
 from smartfields import fields
 from smartfields.dependencies import FileDependency
 from smartfields.processors import ImageProcessor
+import re
+import uuid
+from guardian.shortcuts import assign_perm
 
+# import signals
 
 # Create your models here.
 
@@ -30,6 +37,15 @@ class Post(models.Model):
     def __str__(self):
         return str(self.post_id)
 
+   
+
+    # @property
+    # def activity_time(self):
+    #     atime = self.post_time
+    #     if is_aware(self.post_time):
+    #         atime = make_naive(atime, pytz.utc)
+    #     return atime
+
 
         
     #  def is_liked_or_not(self, userId):
@@ -42,10 +58,27 @@ class Post(models.Model):
 
             if not Post.objects.filter(post_id = newId).exists():
                 self.post_id = newId
-        # if self.imgSrc:
-        #     self.imgSrc = get_thumbnail(self.imgSrc, '640x320', quality=99, format='JPEG').name
+
+        try: 
+
+            post_desc =  self.description
+            hashtags = re.findall(r"#(\w+)", post_desc)
+
+            for h in hashtags:
+                h = h.lower()
+                hashtag, created = HashTag.objects.get_or_create(hashtag = h)
+                hashtag.posts.add(self)
+        
+        
+        except Exception as e:
+            print(e)
+
+        print(self)
+
 
         super().save(*args, **kwargs)
+        assign_perm('change_post', self.user, self)
+
 
 class PostTags(models.Model):
     post_tag_id = models.CharField(primary_key=True, max_length = 15)
@@ -126,11 +159,11 @@ class HashTag(models.Model):
     posts = models.ManyToManyField(Post,related_name='hashtags',  )
     # user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='hashtags',  )
     hashtag_time = models.DateTimeField(auto_now_add=True, null=False)
-    hashtag = models.CharField(max_length=1000, blank=False, null=False)
+    hashtag = models.CharField(max_length=1000, blank=False, null=False, unique=True)
      
 
     def __str__(self):
-        return str(self.post_tag_id)
+        return str(self.hashtag)
 
     def save(self, *args, **kwargs):
         while not self.hashtag_id:

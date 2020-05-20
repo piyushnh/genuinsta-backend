@@ -7,8 +7,20 @@ from rest_framework.permissions import IsAuthenticated
 from django.core import serializers
 from django.db.models import OuterRef, Subquery, Count
 
+from guardian.shortcuts import remove_perm
+
+try:
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+except ImportError:
+    from django.contrib.auth.models import User
+
 from django.core.cache import cache
 import logging
+from stream_django.feed_manager import feed_manager
+# from .signals import *
+
+
 
 
 from rest_framework.decorators import api_view, permission_classes
@@ -36,7 +48,6 @@ from .serializers import PostSerializer
 @permission_classes((IsAuthenticated, ))
 def get_post(request, postId):
     """
-    List all code snippets, or create a new snippet.
     """
     try:
        
@@ -60,7 +71,6 @@ def get_post(request, postId):
 @permission_classes((IsAuthenticated, ))
 def get_user_posts(request, userId):
     """
-    List all code snippets, or create a new snippet.
     """
     try:
        
@@ -79,7 +89,6 @@ def get_user_posts(request, userId):
 @permission_classes((IsAuthenticated, ))
 def get_user_bookmarks(request, userId):
     """
-    List all code snippets, or create a new snippet.
     """
     try:
        
@@ -98,7 +107,6 @@ def get_user_bookmarks(request, userId):
 @permission_classes((IsAuthenticated, ))
 def like_unlike_post(request, postId):
     """
-    List all code snippets, or create a new snippet.
     """
     try:
        
@@ -119,7 +127,6 @@ def like_unlike_post(request, postId):
 @permission_classes((IsAuthenticated, ))
 def bookmark_unbookmark_post(request, postId):
     """
-    List all code snippets, or create a new snippet.
     """
     try:
        
@@ -138,21 +145,51 @@ def bookmark_unbookmark_post(request, postId):
 
 #TODO: Implement get_post_likes 
 
-# @api_view(['POST'])
-# @permission_classes((IsAuthenticated, ))
-# def publish_post(request):
-#     """
-#     List all code snippets, or create a new snippet.
-#     """
-#     try:
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def publish_post(request):
+    
+    try:
+        data = request.data
+
+        Post.objects.create(data)
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        # logging.debug('Error')
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def modify_post(request, postId):
+    # """
+    # """
+    # try:
+        # data = request.data
+
+
+
+        # # user = User.objects.get(email = 'piyush.n.h@gmail.com')
+
+        # if not request.user.has_perm('posts.change_post', postId):
+        #     return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        # post = Post.objects.get(post_id = postId)
+
+        # for k, v in data.items():
+        #     setattr(post, k, v)
+        # post.save()
+
+        print(feed_manager.get_user_feed(request.user.user_id))
+        
        
-       
-       
-#         return Response(status=status.HTTP_200_OK)
-#     except Exception as e:
-#         # logging.debug('Error')
-#         print(e)
-#         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(status=status.HTTP_200_OK)
+    # except Exception as e:
+    #     # logging.debug('Error')
+    #     print(e)
+    #     return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 

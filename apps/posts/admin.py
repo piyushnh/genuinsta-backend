@@ -3,6 +3,7 @@ from .models import (
         Post,
         Comment,
         Tag,
+        HashTag,
         Like,
         Bookmark
 )
@@ -10,6 +11,7 @@ from .models import (
 admin.site.register(Post)
 admin.site.register(Comment)
 admin.site.register(Tag)
+admin.site.register(HashTag)
 admin.site.register(Like)
 admin.site.register(Bookmark)
 
