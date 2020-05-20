@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.friendship',
     'apps.socialAuth',
-    # 'apps.user_profile',
     'apps.groups',
     'apps.posts',
     
@@ -172,7 +171,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'genuinsta',
-        'USER': 'piyush',
+        'USER': 'piyushnh',
         'PASSWORD': 'piyush1235',
         'HOST': 'localhost',
         'PORT': '',
