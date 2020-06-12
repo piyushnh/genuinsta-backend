@@ -9,6 +9,9 @@ except ImportError:
 from stream_django.activity import Activity
 
 
+from django.dispatch import receiver
+from django.db.models.signals import post_save
+
 from apps.groups.models import Group
 from sorl.thumbnail import  get_thumbnail
 from smartfields import fields
@@ -17,12 +20,13 @@ from smartfields.processors import ImageProcessor
 import re
 import uuid
 from guardian.shortcuts import assign_perm
+from django.utils.timezone import is_aware, make_naive
 
 # import signals
 
 # Create your models here.
 
-class Post(models.Model):
+class Post(models.Model, Activity):
     post_id = models.CharField(primary_key=True, max_length = 15)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts',  )
     description = models.TextField(null = False)
@@ -32,6 +36,14 @@ class Post(models.Model):
     ]) 
     post_time = models.DateTimeField(auto_now_add=True, null=False)
     location = models.TextField(null=True)
+    PRIVACY_TYPE_CHOICES = (
+    ("FRIENDS", "friends"),
+    ("FOLLOWERS", "followers"),
+    )
+    privacy_type = models.CharField(max_length=20,
+                  choices=PRIVACY_TYPE_CHOICES,
+                  default="FRIENDS")
+
 
 
     def __str__(self):
@@ -39,18 +51,36 @@ class Post(models.Model):
 
    
 
-    # @property
-    # def activity_time(self):
-    #     atime = self.post_time
-    #     if is_aware(self.post_time):
-    #         atime = make_naive(atime, pytz.utc)
-    #     return atime
+    @property
+    def activity_time(self):
+        atime = self.post_time
+        if is_aware(self.post_time):
+            atime = make_naive(atime, pytz.utc)
+        return atime
+
+    @property
+    def activity_author_feed(self):
+        '''
+        The name of the feed where the activity will be stored; this is normally
+        used by the manager class to determine if the activity should be stored elsewehere than
+        settings.USER_FEED
+        '''
+        print(self.privacy_type)
+        if self.privacy_type.lower() == 'friends':
+            return 'friends'
+        elif self.privacy_type.lower() == 'followers':
+            return 'followers'
+        else:
+            pass
 
 
-        
-    #  def is_liked_or_not(self, userId):
-    #     return Like.objects.filter(post = self.post_id, user = userIf).exists()
-    # liked_or_not = property(is_liked_or_not)    
+    # def is_liked_or_not(self):
+    #     return Like.objects.filter(post = self.post_id, user = self.user).exists()
+    # liked_or_not = property(is_liked_or_not)   
+
+    # def is_bookmarked_or_not(self):
+    #     return Bookmark.objects.filter(post = self.post_id, user = self.user).exists()
+    # bookmarked_or_not = property(is_bookmarked_or_not)    
 
     def save(self, *args, **kwargs):
         while not self.post_id:
@@ -73,11 +103,9 @@ class Post(models.Model):
         except Exception as e:
             print(e)
 
-        print(self)
 
 
         super().save(*args, **kwargs)
-        assign_perm('change_post', self.user, self)
 
 
 class PostTags(models.Model):
@@ -245,6 +273,23 @@ class Bookmark(models.Model):
 
 
         super().save(*args, **kwargs)
+
+@receiver(post_save, sender=Comment)
+def comment_handler(sender, instance, **kwargs):
+        comment = instance
+        assign_perm('posts.delete_comment', comment.comment_by, comment)
+        assign_perm('posts.delete_comment', comment.post.user, comment)
+        assign_perm('posts.change_comment', comment.comment_by, comment)
+
+@receiver(post_save, sender=Post)
+def post_handler(sender, instance, **kwargs):
+        post = instance
+        # assign_perm('posts.change_comment', post.user, post)
+        assign_perm('posts.delete_post', post.user, post)
+
+
+    
+
 
 
 

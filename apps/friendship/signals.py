@@ -1,4 +1,7 @@
 from django.dispatch import Signal
+from django.dispatch import receiver
+from stream_django.feed_manager import feed_manager
+
 
 
 friendship_request_created = Signal()
@@ -13,3 +16,11 @@ followee_created = Signal(providing_args=['followee'])
 followee_removed = Signal(providing_args=['followee'])
 following_created = Signal(providing_args=['following'])
 following_removed = Signal(providing_args=['following'])
+
+
+
+
+
+
+
+

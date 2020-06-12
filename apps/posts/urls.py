@@ -8,7 +8,8 @@ from django.core.cache.backends.base import DEFAULT_TIMEOUT
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
 from .views import (get_post, get_user_bookmarks, like_unlike_post, 
-                        get_user_posts, publish_post, modify_post )
+                        get_user_posts, publish_post, modify_post,
+                        get_timeline )
 
 urlpatterns = [
     
@@ -32,6 +33,10 @@ urlpatterns = [
     path('modifyPost/<postId>/',
             view = modify_post,
              name="modify_post" ),
+    path('getTimeline/',
+            view = get_timeline,
+             name="get_timeline" ),
+
     
              
 

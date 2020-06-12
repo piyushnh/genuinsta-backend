@@ -72,7 +72,8 @@ INSTALLED_APPS = [
     
 
     #Importing App Configs
-    # 'apps.posts.apps.PostsConfig'
+    # 'apps.posts.apps.PostsConfig',
+    # 'apps.friendship.apps.FriendshipConfig'
 
     'stream_django',
 
@@ -128,7 +129,7 @@ AUTHENTICATION_BACKENDS = (
     # 'social_core.backends.facebook.FacebookOAuth2',
 
     # `allauth` specific authentication methods, such as login by e-mail
-    'allauth.account.auth_backends.AuthenticationBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
 
     # Required by `django-guardians`
      'guardian.backends.ObjectPermissionBackend',
@@ -205,13 +206,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Kolkata'
+# TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 
@@ -302,3 +303,38 @@ CELERY_RESULT_SERIALIZER = 'json'
 #Getstream credentials
 STREAM_API_KEY = 'z92y85wanjxs'
 STREAM_API_SECRET = 'cetqe7gf26pzuv7nmxdkg3qym444ktdwr57z6ru9czrypcfbd2h94src3rjn54ts'
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
+}
+
+DEBUG_TOOLBAR_PANELS = [
+    'ddt_request_history.panels.request_history.RequestHistoryPanel',  # Here it is
+    'debug_toolbar.panels.versions.VersionsPanel',
+    'debug_toolbar.panels.timer.TimerPanel',
+    'debug_toolbar.panels.settings.SettingsPanel',
+    'debug_toolbar.panels.headers.HeadersPanel',
+    'debug_toolbar.panels.request.RequestPanel',
+    'debug_toolbar.panels.sql.SQLPanel',
+    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    'debug_toolbar.panels.templates.TemplatesPanel',
+    'debug_toolbar.panels.cache.CachePanel',
+    'debug_toolbar.panels.signals.SignalsPanel',
+    'debug_toolbar.panels.logging.LoggingPanel',
+    'debug_toolbar.panels.redirects.RedirectsPanel',
+    'debug_toolbar.panels.profiling.ProfilingPanel',
+]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}   

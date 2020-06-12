@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from rest_framework.permissions import IsAuthenticated
 from django.core import serializers
 from django.db.models import OuterRef, Subquery, Count
+import json
 
 from guardian.shortcuts import remove_perm
 
@@ -18,7 +19,10 @@ except ImportError:
 from django.core.cache import cache
 import logging
 from stream_django.feed_manager import feed_manager
-# from .signals import *
+from stream_django.enrich import Enrich
+
+enricher = Enrich()
+logger = logging.getLogger(__name__)
 
 
 
@@ -39,7 +43,8 @@ from django.views.generic import ListView
 from django.shortcuts import render, get_object_or_404
 
 from . models import Post, Tag, Like, Comment, Bookmark
-from .serializers import PostSerializer
+from .serializers import PostSerializer, get_activity_serializer, ActivitySerializer
+from apps.users.serializers import UserProfileSerializer
 
 
 
@@ -57,12 +62,10 @@ def get_post(request, postId):
         # likes = Like.objects.filter(post_id=OuterRef('post_id'))
         # tags = Tags.objects.filter(post_id=OuterRef('post_id'))
         # commentsDetails = Subquery(comments.values('comment_id'))
-        post = Post.objects.filter(post_id = postId).annotate( likesCount = Count('likes'), 
-                            tagsCount = Count('tags'), commentsCount = Count('comments') )[0]
-        print('hello')
-        data = PostSerializer(post, context={'request': request}).data
-       
-        return Response(data,status=status.HTTP_200_OK)
+        post = Post.objects.get(post_id = postId)
+        
+        serializer = PostSerializer(post, context={'request': request})
+        return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
         print(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -74,10 +77,8 @@ def get_user_posts(request, userId):
     """
     try:
        
-        posts = Post.objects.filter(user = userId).annotate( likesCount = Count('likes'), 
-                            tagsCount = Count('tags'), commentsCount = Count('comments') )
-
-        data = PostSerializer(posts, many = True, ontext={'request': request}).data
+        posts = Post.objects.get(user = userId)
+        data = PostSerializer(posts, many = True, context={'request': request}).data
        
         return Response(data,status=status.HTTP_200_OK)
     except Exception as e:
@@ -152,8 +153,9 @@ def publish_post(request):
     try:
         data = request.data
 
-        Post.objects.create(data)
-        return Response(status=status.HTTP_200_OK)
+        post = Post.objects.create(data)
+        serializer = PostSerializer(post, context={'request': request})
+        return Response(serializer.data ,status=status.HTTP_200_OK)
     except Exception as e:
         # logging.debug('Error')
         print(e)
@@ -164,31 +166,127 @@ def publish_post(request):
 def modify_post(request, postId):
     # """
     # """
-    # try:
-        # data = request.data
+    try:
+        data = request.data
 
 
 
-        # # user = User.objects.get(email = 'piyush.n.h@gmail.com')
+        # user = User.objects.get(email = 'piyush.n.h@gmail.com')
 
-        # if not request.user.has_perm('posts.change_post', postId):
-        #     return Response(status=status.HTTP_401_UNAUTHORIZED)
+        if not request.user.has_perm('posts.change_post', postId):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
 
-        # post = Post.objects.get(post_id = postId)
+        post = Post.objects.get(post_id = postId)
 
-        # for k, v in data.items():
-        #     setattr(post, k, v)
-        # post.save()
-
-        print(feed_manager.get_user_feed(request.user.user_id))
-        
+        for k, v in data.items():
+            setattr(post, k, v)
+        post.save()
        
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def get_timeline(request):
+    # """
+    # """
+    try:
+        
+        activities = feed_manager.get_feed('timeline', request.user.user_id).get()['results']
+        enriched_activities = enricher.enrich_activities(activities)
+        data = []
+        for activity in enriched_activities:
+             data.append(activity.activity_data)
+
+
+        if len(data) > 1:
+            serializer = ActivitySerializer(data,  context={'request': request}, many = True)
+        elif len(data) == 1:
+            serializer = ActivitySerializer(data,  context={'request': request})
+        else:
+            return Response([], status=status.HTTP_200_OK)
+
+        return Response(serializer.data , status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def publish_comment(request, postId):
+    
+    try:
+        data = request.data
+        post = Post.objects.get(post_id = postId)
+        Post.objects.create(data, post=post)
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        # logging.debug('Error')
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def delete_comment(request, commentId):
+    
+    try:
+
+        if not request.user.has_perm('posts.delete_comment', commentId):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+        
+        Comment.objects.get(comment_id = commentId).delete()
 
         return Response(status=status.HTTP_200_OK)
-    # except Exception as e:
-    #     # logging.debug('Error')
-    #     print(e)
-    #     return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        logging.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def modify_comment(request, commentId):
+    # """
+    # """
+    try:
+        data = request.data
+
+
+        if not request.user.has_perm('posts.change_comment', commentId):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        comment = Post.objects.get(comment_id = commentId)
+
+        for k, v in data.items():
+            setattr(comment, k, v)
+        comment.save()
+       
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def get_post_comments(request, postId):
+    """
+    """
+    try:
+       
+       
+        comments = Post.objects.get(post_id = postId).comments
+        
+        serializer = CommentSerializer(comments, context={'request': request})
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
 
 
 

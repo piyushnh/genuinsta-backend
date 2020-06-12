@@ -177,19 +177,17 @@ def following(request, username, template_name='friendship/follow/following_list
 @permission_classes((IsAuthenticated, ))
 def follower_add(request):
     """ Create a following relationship """
-
-    if request.method == 'POST':
+    try:
         data = request.data
         followee_userId = data['userId']
         followee = user_model.objects.get(user_id=followee_userId)
         follower = request.user
-        try:
-            Follow.objects.add_follower(follower, followee)
-            return Response(status=status.HTTP_200_OK)
+        Follow.objects.add_follower(follower, followee)
+        return Response(status=status.HTTP_200_OK)
 
-        except Exception as e:
-            print(e)
-            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         
 

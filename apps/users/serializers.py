@@ -7,7 +7,7 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
 
-from apps.friendship.models import Follow
+from apps.friendship.models import Follow, Friend
 
 class UserSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
@@ -45,8 +45,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         ('N','NONE')
     ]
 
-    isFollowing = serializers.BooleanField(default = False)
-    friendshipStatus = serializers.ChoiceField(choices = FRIENDSHIP_CHOICES, default = ('N','NONE'))
+    isFollowing = serializers.SerializerMethodField()
+    friendshipStatus = serializers.SerializerMethodField()
     # isFriendRequestReceived = serializers.BooleanField(default = False)
     # areFriends = serializers.BooleanField(default = False)
 
@@ -54,7 +54,21 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ['first_name', 'last_name', 'email',  'mobile_number', 'bio', 
                     'profile_picture', 'date_joined', 'isFollowing',
-                    'friendshipStatus' ]
+                    'friendshipStatus', 'username' ]
+
+    def get_isFollowing(self, that_user, **kwargs):
+        request = self.context.get('request')
+        this_user = request.user
+        
+
+        return Follow.objects.follows(follower =  this_user, followee = that_user )
+
+    def get_friendshipStatus(self, that_user, **kwargs):
+        request = self.context.get('request')
+        this_user = request.user
+        
+
+        return Friend.objects.friendship_status(this_user =  this_user, other_user = that_user )
 
 
 

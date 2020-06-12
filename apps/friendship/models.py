@@ -9,6 +9,10 @@ from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 from django.utils.encoding import python_2_unicode_compatible
 
+from django.dispatch import Signal
+from django.dispatch import receiver
+from stream_django.feed_manager import feed_manager
+
 from friendship.exceptions import AlreadyExistsError, AlreadyFriendsError
 from friendship.signals import (
     friendship_request_created, friendship_request_rejected,
@@ -17,6 +21,12 @@ from friendship.signals import (
     friendship_removed, follower_created, follower_removed,
     followee_created, followee_removed, following_created, following_removed
 )
+
+def get_object_or_none(classmodel, **kwargs):
+    try:
+        return classmodel.objects.get(**kwargs)
+    except classmodel.DoesNotExist:
+        return None  
 
 AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
 
@@ -338,6 +348,27 @@ class FriendshipManager(models.Manager):
             except Friend.DoesNotExist:
                 return False
 
+    def friendship_status(self, this_user, other_user):
+
+        if this_user == other_user:
+            return 'NONE'
+
+        isFriendRequestSent = get_object_or_none(FriendshipRequest, from_user = this_user, to_user = other_user)
+        isFriendRequestReceived = get_object_or_none(FriendshipRequest, from_user = other_user, to_user = this_user)
+        
+        if (not isFriendRequestSent) and (not isFriendRequestReceived):
+            areFriends = Friend.objects.are_friends(this_user, other_user)  
+        
+        if isFriendRequestSent:
+            return 'REQUEST_SENT'
+        elif isFriendRequestReceived:
+            return 'REQUEST_RECEIVED'
+        elif areFriends:
+            return 'ARE_FRIENDS'
+        else:
+            return 'NONE'
+
+
 
 @python_2_unicode_compatible
 class Friend(models.Model):
@@ -400,9 +431,11 @@ class FollowingManager(models.Manager):
         if created is False:
             raise AlreadyExistsError("User '%s' already follows '%s'" % (follower, followee))
 
-        follower_created.send(sender=self, follower=follower)
-        followee_created.send(sender=self, followee=followee)
-        following_created.send(sender=self, following=relation)
+        follower_created.send_robust(sender=self, follower=follower)
+        followee_created.send_robust(sender=self, followee=followee)
+        following_created.send_robust(sender=self, following=relation)
+
+        print('hello')
 
         bust_cache('followers', followee.pk)
         bust_cache('following', follower.pk)
@@ -428,6 +461,8 @@ class FollowingManager(models.Manager):
         followers = cache.get(cache_key('following', follower.pk))
         following = cache.get(cache_key('followers', followee.pk))
 
+        if follower == followee:
+            return False
         if followers and followee in followers:
             return True
         elif following and follower in following:
@@ -440,28 +475,7 @@ class FollowingManager(models.Manager):
                 return False
 
 
-@python_2_unicode_compatible
-class Follow(models.Model):
-    """ Model to represent Following relationships """
-    follower = models.ForeignKey(AUTH_USER_MODEL, related_name='following', on_delete=models.CASCADE)
-    followee = models.ForeignKey(AUTH_USER_MODEL, related_name='followers', on_delete=models.CASCADE)
-    created = models.DateTimeField(default=timezone.now)
 
-    objects = FollowingManager()
-
-    class Meta:
-        verbose_name = _('Following Relationship')
-        verbose_name_plural = _('Following Relationships')
-        unique_together = ('follower', 'followee')
-
-    def __str__(self):
-        return "User #%s follows #%s" % (self.follower_id, self.followee_id)
-
-    def save(self, *args, **kwargs):
-        # Ensure users can't be friends with themselves
-        if self.follower == self.followee:
-            raise ValidationError("Users cannot follow themselves.")
-        super(Follow, self).save(*args, **kwargs)
 
 @python_2_unicode_compatible
 class Follow(models.Model):
@@ -485,3 +499,20 @@ class Follow(models.Model):
         if self.follower == self.followee:
             raise ValidationError("Users cannot follow themselves.")
         super(Follow, self).save(*args, **kwargs)
+
+@receiver(following_created)
+def following_handler(sender, following, **kwargs):
+    try:
+
+        # print('dfvdfvfdvf')
+        follower = following.follower
+        followee = following.followee
+
+        followee_feed = feed_manager.get_feed('followers', followee.user_id)
+        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
+
+        follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
+
+        print('usdbdsbcbsjdhd')  
+    except Exception as e:
+        print(e)
