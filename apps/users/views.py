@@ -72,7 +72,7 @@ def get_user_profile(request, userId):
     List all code snippets, or create a new snippet.
     """
     try:
-        async_to_sync(channel_layer.group_send)('random_group', {"type": "friend.request.received", 'request_data': 'hello'})
+        # async_to_sync(channel_layer.group_send)('random_group', {"type": "friend.request.received", 'request_data': 'hello'})
 
         this_user = request.user
         other_user = User.objects.get(user_id = userId)
@@ -105,3 +105,20 @@ def get_user_profile(request, userId):
     except Exception as e:
         print(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def get_owner_profile(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    try:
+        # user = request.user
+
+        serializedProfile = UserProfileSerializer(request.user)
+        return Response(serializedProfile.data,status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

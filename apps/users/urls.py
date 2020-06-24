@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
-from .views import (UserDetails,get_user_profile)
+from .views import (UserDetails,get_user_profile, get_owner_profile)
 
 urlpatterns = [
     
@@ -17,6 +17,9 @@ urlpatterns = [
     path('profile/<userId>/',
             view = get_user_profile,
              name="user_profile" ),
+    path('ownerProfile/',
+            view = get_owner_profile,
+             name="get_owner_profile" ),
              
 
 

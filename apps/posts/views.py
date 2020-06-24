@@ -153,7 +153,10 @@ def publish_post(request):
     try:
         data = request.data
 
-        post = Post.objects.create(data)
+        print(data)
+
+        post = Post.objects.create(image=data['image'], description=data['description'],
+                                    location=data['location'], privacy_type= data['privacy_type'], user=request.user)
         serializer = PostSerializer(post, context={'request': request})
         return Response(serializer.data ,status=status.HTTP_200_OK)
     except Exception as e:
