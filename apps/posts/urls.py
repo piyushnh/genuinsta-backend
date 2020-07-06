@@ -9,7 +9,7 @@ CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
 from .views import (get_post, get_user_bookmarks, like_unlike_post, 
                         get_user_posts, publish_post, modify_post,
-                        get_timeline )
+                        get_timeline, publish_comment )
 
 urlpatterns = [
     
@@ -36,6 +36,9 @@ urlpatterns = [
     path('getTimeline/',
             view = get_timeline,
              name="get_timeline" ),
+    path('addComment/<postId>/',
+            view = publish_comment,
+             name="publish_comment" ),
 
     
              

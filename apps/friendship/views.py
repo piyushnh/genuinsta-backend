@@ -42,20 +42,20 @@ def view_friends(request, username):
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
-def friendship_add_friend(request, to_userId):
+def friendship_add_friend(request, to_username):
     """ Create a FriendshipRequest """
     # ctx = {'to_username': to_username}
 
-    to_user = user_model.objects.get(user_id=to_userId)
+    to_user = user_model.objects.get(username=to_username)
     from_user = request.user
     try:
         Friend.objects.add_friend(from_user, to_user)
-        async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "friend.request.received", 'request_data': UserProfileSerializer(from_user).data})
+        # async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "friend.request.received", 'request_data': UserProfileSerializer(from_user).data})
 
     except AlreadyExistsError as e:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
-    return Response(status=status.HTTP_201_CREATED)
+    return Response(status=status.HTTP_200_OK)
 
 
 @login_required
@@ -71,6 +71,21 @@ def friendship_accept(request, friendship_request_id):
 
     return Response(status=status.HTTP_202_ACCEPTED)
 
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def remove_friend(request, friend_username):
+    """ Remove a particular person as friend """
+    try:
+        friend = user_model.objects.get(username = friend_username)
+        user = request.user
+        successful = Friend.objects.remove_friend(friend, user)
+        if successful:
+            return Response(None, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @login_required
@@ -88,6 +103,32 @@ def friendship_reject(request, friendship_request_id):
     return Response(status=status.HTTP_200_OK)
 
 
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def friendship_request_accept(request, from_username):
+    """ Cancel a previously created friendship_request_id """
+    from_user = user_model.objects.get(username=from_username)
+    to_user = request.user
+    try:
+        f_request = FriendshipRequest.objects.get(from_user, to_user)
+        f_request.accept()
+        return Response(None, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def friendship_request_cancel(request, to_username):
+    """ Cancel a previously created friendship_request_id """
+    to_user = user_model.objects.get(username=to_username)
+    from_user = request.user
+    try:
+        FriendshipRequest.objects.cancel_request(from_user, to_user)
+
+        return Response(None, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @login_required
 @api_view(['POST'])
 def friendship_cancel(request, friendship_request_id):
@@ -142,14 +183,7 @@ def friendship_requests_detail(request, friendship_request_id, template_name='fr
 
     return Response(serializer.data)
 
-@login_required
-def remove_friend(request, friend_username):
-    """ Remove a particular person as friend """
-    friend = user_model.objects.get(username = friend_username)
-    user = request.user
-    successful = Friend.objects.remove_friend(friend, user)
-    if successful:
-        return redirect("userprofiles:public_profile", kwargs={'pk':friend.pk})
+
 
 def followers(request, username, template_name='friendship/follow/followers_list.html'):
     """ List this user's followers """
@@ -175,15 +209,15 @@ def following(request, username, template_name='friendship/follow/following_list
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
-def follower_add(request):
+def follower_add(request,username):
     """ Create a following relationship """
     try:
         data = request.data
-        followee_userId = data['userId']
-        followee = user_model.objects.get(user_id=followee_userId)
+        followee_username = username
+        followee = user_model.objects.get(username=followee_username)
         follower = request.user
         Follow.objects.add_follower(follower, followee)
-        return Response(status=status.HTTP_200_OK)
+        return Response(None, status=status.HTTP_200_OK)
 
     except Exception as e:
         print(e)
@@ -193,16 +227,20 @@ def follower_add(request):
 
 
 
-@login_required
-def follower_remove(request, followee_username, template_name='friendship/follow/remove.html'):
+@api_view(['POST'])
+@permission_classes((IsAuthenticated, ))
+def follower_remove(request, followee_username):
     """ Remove a following relationship """
-    if request.method == 'POST':
+    try:
         followee = user_model.objects.get(username=followee_username)
         follower = request.user
         Follow.objects.remove_follower(follower, followee)
-        return redirect('friendship:friendship_following', username=follower.username)
+        return Response(None, status=status.HTTP_200_OK)
 
-    return render(request, template_name, {'followee_username': followee_username})
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(['GET'])

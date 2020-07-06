@@ -22,6 +22,8 @@ from friendship.signals import (
     followee_created, followee_removed, following_created, following_removed
 )
 
+from .tasks import (after_following_task, after_unfollowing_task, after_friending_task,
+                   after_unfriending_task)
 def get_object_or_none(classmodel, **kwargs):
     try:
         return classmodel.objects.get(**kwargs)
@@ -104,16 +106,24 @@ class FriendshipRequest(models.Model):
             to_user=self.to_user
         )
 
+        after_friending_task.delay(from_user=self.from_user,
+                         to_user = self.to_user)
+        
         relation2 = Friend.objects.create(
             from_user=self.to_user,
             to_user=self.from_user
         )
 
-        friendship_request_accepted.send(
-            sender=self,
-            from_user=self.from_user,
-            to_user=self.to_user
-        )
+        after_friending_task.delay(from_user=self.to_user,
+                         to_user = self.from_user)
+
+
+        # friendship_request_accepted.send(
+        #     sender=self,
+        #     from_user=self.from_user,
+        #     to_user=self.to_user
+        # )
+
 
         self.delete()
 
@@ -148,6 +158,15 @@ class FriendshipRequest(models.Model):
         friendship_request_canceled.send(sender=self)
         bust_cache('requests', self.to_user.pk)
         bust_cache('sent_requests', self.from_user.pk)
+        return True
+    def cancel_request(self, from_user,to_user):
+        """ cancel this friendship request """
+        relation= FriendshipRequest.objects.get(from_user=from_user,
+                        to_user=to_user)
+        relation.delete()
+        friendship_request_canceled.send(sender=relation)
+        bust_cache('requests', relation.to_user.pk)
+        bust_cache('sent_requests', relation.from_user.pk)
         return True
 
     def mark_viewed(self):
@@ -319,11 +338,13 @@ class FriendshipManager(models.Manager):
             ).distinct().all()
 
             if qs:
-                friendship_removed.send(
-                    sender=qs[0],
-                    from_user=from_user,
-                    to_user=to_user
-                )
+                # friendship_removed.send(
+                #     sender=qs[0],
+                #     from_user=from_user,
+                #     to_user=to_user
+                # )
+                after_unfriending_task.delay(from_user, to_user)
+                after_unfriending_task.delay(to_user, from_user)
                 qs.delete()
                 bust_cache('friends', to_user.pk)
                 bust_cache('friends', from_user.pk)
@@ -431,11 +452,16 @@ class FollowingManager(models.Manager):
         if created is False:
             raise AlreadyExistsError("User '%s' already follows '%s'" % (follower, followee))
 
-        follower_created.send_robust(sender=self, follower=follower)
-        followee_created.send_robust(sender=self, followee=followee)
-        following_created.send_robust(sender=self, following=relation)
+        # follower_created.send_robust(sender=self, follower=follower)
+        # followee_created.send_robust(sender=self, followee=followee)
+        # following_created.send_robust(sender=self, following=relation)
+        res = after_following_task.delay(follower.user_id, followee.user_id)
 
-        print('hello')
+
+        print(res.ready())
+
+        if res.ready():
+            print('hello')
 
         bust_cache('followers', followee.pk)
         bust_cache('following', follower.pk)
@@ -446,9 +472,11 @@ class FollowingManager(models.Manager):
         """ Remove 'follower' follows 'followee' relationship """
         try:
             rel = Follow.objects.get(follower=follower, followee=followee)
-            follower_removed.send(sender=rel, follower=rel.follower)
-            followee_removed.send(sender=rel, followee=rel.followee)
-            following_removed.send(sender=rel, following=rel)
+            # follower_removed.send(sender=rel, follower=rel.follower)
+            # followee_removed.send(sender=rel, followee=rel.followee)
+            # following_removed.send(sender=rel, following=rel)
+
+            after_unfollowing_task.delay(follower.user_id, followee.user_id)
             rel.delete()
             bust_cache('followers', followee.pk)
             bust_cache('following', follower.pk)
@@ -513,6 +541,40 @@ def following_handler(sender, following, **kwargs):
 
         follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
 
-        print('usdbdsbcbsjdhd')  
+        # print('usdbdsbcbsjdhd')  
+    except Exception as e:
+        print(e)
+
+@receiver(following_removed)
+def unfollowing_handler(sender, following, **kwargs):
+    try:
+
+        # print('dfvdfvfdvf')
+        follower = following.follower
+        followee = following.followee
+
+        followee_feed = feed_manager.get_feed('followers', followee.user_id)
+        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
+
+        follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id, keep_history=True)  
+
+        # print('usdbdsbcbsjdhd')  
+    except Exception as e:
+        print(e)
+
+@receiver(following_created)
+def friending_handler(sender, following, **kwargs):
+    try:
+
+        # print('dfvdfvfdvf')
+        follower = following.follower
+        followee = following.followee
+
+        followee_feed = feed_manager.get_feed('followers', followee.user_id)
+        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
+
+        follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
+
+        # print('usdbdsbcbsjdhd')  
     except Exception as e:
         print(e)

@@ -10,7 +10,7 @@ app = Celery('influence')
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.
 app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks()
+app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 app.conf.broker_url = 'redis://localhost:6379/0'
 
 

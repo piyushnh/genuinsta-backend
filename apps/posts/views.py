@@ -43,7 +43,8 @@ from django.views.generic import ListView
 from django.shortcuts import render, get_object_or_404
 
 from . models import Post, Tag, Like, Comment, Bookmark
-from .serializers import PostSerializer, get_activity_serializer, ActivitySerializer
+from .serializers import (PostSerializer, get_activity_serializer, 
+        ActivitySerializer, CommentSerializer)
 from apps.users.serializers import UserProfileSerializer
 
 
@@ -223,8 +224,9 @@ def publish_comment(request, postId):
     try:
         data = request.data
         post = Post.objects.get(post_id = postId)
-        Post.objects.create(data, post=post)
-        return Response(status=status.HTTP_200_OK)
+        comment = post.comments.create(comment_by=request.user, comment_type='text', text=data['text'])
+        serializer = CommentSerializer(comment)
+        return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
         # logging.debug('Error')
         print(e)

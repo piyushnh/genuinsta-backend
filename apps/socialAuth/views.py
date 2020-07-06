@@ -33,7 +33,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 import os
 
-from apps.users.serializers import UserSerializer
+from apps.users.serializers import AuthUserSerializer
 
 json = os.path.join(settings.KEYFILES_DIR, settings.FIREBASE_KEY)
 cred = credentials.Certificate(json)
@@ -220,7 +220,7 @@ def authenticate(request):
             user.save()
             
         token, _ = Token.objects.get_or_create(user=user)
-        user_serializer = UserSerializer(user)    
+        user_serializer = AuthUserSerializer(user)    
         return Response( {'token': token.key, 'user': user_serializer.data},status=status.HTTP_200_OK)
 
 @api_view(['POST'])

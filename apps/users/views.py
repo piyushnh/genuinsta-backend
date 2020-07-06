@@ -40,34 +40,34 @@ def get_object_or_none(classmodel, **kwargs):
     except classmodel.DoesNotExist:
         return None    
 
-class UserDetails(RetrieveAPIView):
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated, )
-    queryset = User.objects.all()
+# class UserDetails(RetrieveAPIView):
+#     serializer_class = UserSerializer
+#     permission_classes = (IsAuthenticated, )
+#     queryset = User.objects.all()
 
-class UserProfile(RetrieveAPIView):
-    serializer_class = UserProfileSerializer
-    permission_classes = (IsAuthenticated, )
+# class UserProfile(RetrieveAPIView):
+#     serializer_class = UserProfileSerializer
+#     permission_classes = (IsAuthenticated, )
     
-    def get_object(self):
-        user_id = self.kwargs['userId']
-        user = User.objects.get(username=user_id)
+#     def get_object(self):
+#         user_id = self.kwargs['userId']
+#         user = User.objects.get(username=user_id)
 
-        return user
+#         return user
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context.update(
-            {
-                "userId": self.kwargs['userId']
-            }
-        )
-        return context
+#     def get_serializer_context(self):
+#         context = super().get_serializer_context()
+#         context.update(
+#             {
+#                 "userId": self.kwargs['userId']
+#             }
+#         )
+#         return context
 
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, ))
-def get_user_profile(request, userId):
+def get_user_profile(request, userName):
     """
     List all code snippets, or create a new snippet.
     """
@@ -75,9 +75,9 @@ def get_user_profile(request, userId):
         # async_to_sync(channel_layer.group_send)('random_group', {"type": "friend.request.received", 'request_data': 'hello'})
 
         this_user = request.user
-        other_user = User.objects.get(user_id = userId)
+        other_user = User.objects.get(username = userName)
 
-        serialized_profile = UserProfileSerializer(other_user)
+        serialized_profile = UserProfileSerializer(other_user, context={'request': request})
         # IMPORTANT to first assign it to a variable, coz modifying serialized_profile.data 
         # directly doesn't work
         data = serialized_profile.data
@@ -113,9 +113,10 @@ def get_owner_profile(request):
     List all code snippets, or create a new snippet.
     """
     try:
-        # user = request.user
+        # print(request)
+        user = request.user
 
-        serializedProfile = UserProfileSerializer(request.user)
+        serializedProfile = UserProfileSerializer(user,  context={'request': request})
         return Response(serializedProfile.data,status=status.HTTP_200_OK)
     except Exception as e:
         print(e)

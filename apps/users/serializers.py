@@ -7,7 +7,16 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
 
-from apps.friendship.models import Follow, Friend
+from apps.friendship.models import Follow, Friend, FriendshipRequest
+
+class AuthUserSerializer(serializers.ModelSerializer):
+    # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
+    firstname = serializers.CharField(source='first_name')
+    surname = serializers.CharField(source='last_name')
+
+    class Meta:
+        model = User
+        fields = ['username','firstname', 'surname', 'email',  'mobile_number', 'user_id' ]
 
 class UserSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
@@ -15,7 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username','first_name', 'last_name', 'email',  'mobile_number', 'user_id' ]
+        fields = ['username','first_name', 'last_name', 'email',  'mobile_number' ]
 
 class UserProfileSerializer(serializers.ModelSerializer):
 
@@ -47,12 +56,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     isFollowing = serializers.SerializerMethodField()
     friendshipStatus = serializers.SerializerMethodField()
+    friendRequestId = serializers.SerializerMethodField()
     # isFriendRequestReceived = serializers.BooleanField(default = False)
     # areFriends = serializers.BooleanField(default = False)
-
+    firstname = serializers.CharField(source='first_name')
+    surname = serializers.CharField(source='last_name')
+ 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email',  'mobile_number', 'bio', 
+        fields = ['firstname', 'surname', 'email',  'mobile_number', 'bio', 
                     'profile_picture', 'date_joined', 'isFollowing',
                     'friendshipStatus', 'username' ]
 
@@ -69,6 +81,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
         
 
         return Friend.objects.friendship_status(this_user =  this_user, other_user = that_user )
+
+    def get_friendRequestId(self, that_user, **kwargs):
+        request = self.context.get('request')
+        this_user = request.user
+        
+
+        return FriendshipRequest.objects.get(this_user =  this_user, other_user = that_user )
 
 
 

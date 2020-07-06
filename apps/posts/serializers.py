@@ -8,13 +8,13 @@ except ImportError:
     from django.contrib.auth.models import User
 
 from .models import (Post, Like, Bookmark, Comment)
-from apps.users.serializers import UserProfileSerializer
+from apps.users.serializers import UserProfileSerializer, UserSerializer
 
 
 
 class CommentSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
-    comment_by = UserProfileSerializer(read_only = True)
+    comment_by = UserSerializer(read_only = True)
 
     class Meta:
         model = Comment
