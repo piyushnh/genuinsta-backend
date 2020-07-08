@@ -9,7 +9,7 @@ CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
 from .views import (get_post, get_user_bookmarks, like_unlike_post, 
                         get_user_posts, publish_post, modify_post,
-                        get_timeline, publish_comment )
+                        get_timeline, publish_comment, toggle_bookmark )
 
 urlpatterns = [
     
@@ -23,6 +23,9 @@ urlpatterns = [
     path('getBookmarks/<userId>/',
             view = get_user_bookmarks,
              name="get_bookmarks" ),
+    path('toggleBookmark/<postId>/',
+            view = toggle_bookmark,
+             name="toggle_bookmarks" ),
     
     path('likeUnlikePost/<postId>/',
             view = like_unlike_post,

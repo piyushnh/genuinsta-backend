@@ -70,12 +70,12 @@ def after_unfriending_task(from_user_id, to_user_id):
     try:
         # time.wait(20)
 
-        followee_feed = feed_manager.get_feed('followers', to_user_id)
+        # followee_feed = feed_manager.get_feed('followers', to_user_id)
         friends_feed = feed_manager.get_feed('friends', to_user_id)
 
         follower_timeline = feed_manager.get_feed('timeline', from_user_id)
 
-        follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id) 
+        # follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id) 
         follower_timeline.unfollow(friends_feed.slug, friends_feed.user_id) 
 
 

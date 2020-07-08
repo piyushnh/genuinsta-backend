@@ -38,7 +38,7 @@ urlpatterns = [
         name='friendship_reject',
     ),
     path(
-        'friend/cancel_request/<friendship_request_id>/',
+        'friend/cancel_request/<to_username>/',
         view=friendship_request_cancel,
         name='friendship_request_cancel',
     ),

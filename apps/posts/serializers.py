@@ -30,7 +30,14 @@ class PostSerializer(serializers.ModelSerializer):
     likes_count = serializers.SerializerMethodField()
     user = UserProfileSerializer(read_only = True)
     
+    username = serializers.CharField(source='user.username')
+    firstname = serializers.CharField(source='user.first_name')
+    surname = serializers.CharField(source='user.last_name')
+    imgSrc = serializers.ImageField(source='image', use_url=True)
+
     liked_or_not = serializers.SerializerMethodField()
+    filter = serializers.SerializerMethodField()
+    type = serializers.SerializerMethodField()
     bookmarked_or_not = serializers.SerializerMethodField()
     # liked_or_not = serializers.BooleanField()
     # liked_or_not = serializers.BooleanField()
@@ -39,6 +46,11 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields =('__all__')
 
+    def get_filter(self, post, **kwargs):
+        return ''
+
+    def get_type(self, post, **kwargs):
+        return 'user'
     def get_likes_count(self, post, **kwargs):
         return post.likes.count()
 

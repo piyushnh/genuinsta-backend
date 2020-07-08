@@ -127,14 +127,14 @@ def like_unlike_post(request, postId):
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
-def bookmark_unbookmark_post(request, postId):
+def toggle_bookmark(request, postId):
     """
     """
     try:
        
-        bookmarked_or_not = request.data['bookmarkedOrNot']
+        isBookmarked = request.data['isBookmarked']
         post = Post.objects.get(post_id = postId)
-        if (bookmarked_or_not):
+        if (isBookmarked):
             post.bookmarks.get(user = request.user).delete()
         else:
             Bookmark.objects.create(post = post, user = request.user)
@@ -203,7 +203,6 @@ def get_timeline(request):
         data = []
         for activity in enriched_activities:
              data.append(activity.activity_data)
-
 
         if len(data) > 1:
             serializer = ActivitySerializer(data,  context={'request': request}, many = True)
@@ -287,6 +286,8 @@ def get_post_comments(request, postId):
     except Exception as e:
         print(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 
 
 

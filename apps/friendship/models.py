@@ -4,6 +4,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+import uuid
 
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
@@ -99,6 +100,17 @@ class FriendshipRequest(models.Model):
     def __str__(self):
         return "User #%s friendship requested #%s" % (self.from_user_id, self.to_user_id)
 
+    def save(self, *args, **kwargs):
+        while not self.id:
+            newId = uuid.uuid4().int/100000000000000000000000000000000
+
+
+
+            if not FriendshipRequest.objects.filter(id = newId).exists():
+                self.id = newId
+
+        super().save(*args, **kwargs)
+
     def accept(self):
         """ Accept this friendship request """
         relation1 = Friend.objects.create(
@@ -159,15 +171,7 @@ class FriendshipRequest(models.Model):
         bust_cache('requests', self.to_user.pk)
         bust_cache('sent_requests', self.from_user.pk)
         return True
-    def cancel_request(self, from_user,to_user):
-        """ cancel this friendship request """
-        relation= FriendshipRequest.objects.get(from_user=from_user,
-                        to_user=to_user)
-        relation.delete()
-        friendship_request_canceled.send(sender=relation)
-        bust_cache('requests', relation.to_user.pk)
-        bust_cache('sent_requests', relation.from_user.pk)
-        return True
+    
 
     def mark_viewed(self):
         self.viewed = timezone.now()
@@ -204,6 +208,16 @@ class FriendshipManager(models.Manager):
             cache.set(key, requests)
 
         return requests
+
+    def cancel_request(self, from_user,to_user):
+        """ cancel this friendship request """
+        relation= FriendshipRequest.objects.get(from_user=from_user,
+                        to_user=to_user)
+        relation.delete()
+        # friendship_request_canceled.send(sender=relation)
+        bust_cache('requests', relation.to_user.pk)
+        bust_cache('sent_requests', relation.from_user.pk)
+        return True
 
     def sent_requests(self, user):
         """ Return a list of friendship requests from user """
@@ -343,8 +357,8 @@ class FriendshipManager(models.Manager):
                 #     from_user=from_user,
                 #     to_user=to_user
                 # )
-                after_unfriending_task.delay(from_user, to_user)
-                after_unfriending_task.delay(to_user, from_user)
+                after_unfriending_task.delay(from_user.user_id, to_user.user_id)
+                after_unfriending_task.delay(to_user.user_id, from_user.user_id)
                 qs.delete()
                 bust_cache('friends', to_user.pk)
                 bust_cache('friends', from_user.pk)
@@ -364,7 +378,10 @@ class FriendshipManager(models.Manager):
             return True
         else:
             try:
-                Friend.objects.get(to_user=user1, from_user=user2)
+                Friend.objects.get(
+                Q(to_user=user1, from_user=user2) |
+                Q(to_user=user2, from_user=user1)
+            )
                 return True
             except Friend.DoesNotExist:
                 return False

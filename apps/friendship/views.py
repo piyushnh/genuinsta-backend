@@ -123,7 +123,7 @@ def friendship_request_cancel(request, to_username):
     to_user = user_model.objects.get(username=to_username)
     from_user = request.user
     try:
-        FriendshipRequest.objects.cancel_request(from_user, to_user)
+        Friend.objects.cancel_request(from_user, to_user)
 
         return Response(None, status=status.HTTP_200_OK)
     except Exception as e:

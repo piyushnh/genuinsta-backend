@@ -56,7 +56,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     isFollowing = serializers.SerializerMethodField()
     friendshipStatus = serializers.SerializerMethodField()
-    friendRequestId = serializers.SerializerMethodField()
+    sentFriendRequestId = serializers.SerializerMethodField()
+    receivedFriendRequestId = serializers.SerializerMethodField()
     # isFriendRequestReceived = serializers.BooleanField(default = False)
     # areFriends = serializers.BooleanField(default = False)
     firstname = serializers.CharField(source='first_name')
@@ -66,7 +67,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ['firstname', 'surname', 'email',  'mobile_number', 'bio', 
                     'profile_picture', 'date_joined', 'isFollowing',
-                    'friendshipStatus', 'username' ]
+                    'friendshipStatus', 'username','sentFriendRequestId', 'receivedFriendRequestId' ]
 
     def get_isFollowing(self, that_user, **kwargs):
         request = self.context.get('request')
@@ -82,12 +83,22 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return Friend.objects.friendship_status(this_user =  this_user, other_user = that_user )
 
-    def get_friendRequestId(self, that_user, **kwargs):
+    def get_sentFriendRequestId(self, that_user, **kwargs):
         request = self.context.get('request')
         this_user = request.user
-        
 
-        return FriendshipRequest.objects.get(this_user =  this_user, other_user = that_user )
+        try:
+            return FriendshipRequest.objects.get(from_user =  this_user, to_user = that_user ).id
+        except:
+            return ''
 
+    def get_receivedFriendRequestId(self, that_user, **kwargs):
+        request = self.context.get('request')
+        this_user = request.user
+
+        try:
+            return FriendshipRequest.objects.get(from_user =  that_user, to_user = this_user ).id
+        except:
+            return ''
 
 
