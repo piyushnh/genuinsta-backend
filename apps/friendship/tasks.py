@@ -2,7 +2,7 @@ from celery.decorators import task
 from celery.utils.log import get_task_logger
 from stream_django.feed_manager import feed_manager
 import time
-
+from .feed import followFeedManager, TimelineFeed, FollowersFeed 
 
 
 logger = get_task_logger(__name__)
@@ -14,11 +14,11 @@ def after_following_task(follower_id, followee_id):
     try:
         # time.wait(20)
 
-        followee_feed = feed_manager.get_feed('followers', followee_id)
-        follower_timeline = feed_manager.get_feed('timeline', follower_id)
+        followee_feed = FollowersFeed(followee_id)
+        follower_timeline = TimelineFeed(follower_id)
 
-        follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
-        logger.info("Done")
+        # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
+        followFeedManager.follow_feed(follower_timeline, followee_feed) 
 
         return 'hellos'
 

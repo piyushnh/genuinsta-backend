@@ -171,7 +171,7 @@ WSGI_APPLICATION = 'influence.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'genuinsta',
+        'NAME': 'genuinstagram',
         'USER': 'piyushnh',
         'PASSWORD': 'piyush1235',
         'HOST': 'localhost',

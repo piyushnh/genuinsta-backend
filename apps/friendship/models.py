@@ -23,8 +23,8 @@ from friendship.signals import (
     followee_created, followee_removed, following_created, following_removed
 )
 
-from .tasks import (after_following_task, after_unfollowing_task, after_friending_task,
-                   after_unfriending_task)
+# from .tasks import (after_following_task, after_unfollowing_task, after_friending_task,
+#                    after_unfriending_task)
 def get_object_or_none(classmodel, **kwargs):
     try:
         return classmodel.objects.get(**kwargs)
@@ -32,6 +32,157 @@ def get_object_or_none(classmodel, **kwargs):
         return None  
 
 AUTH_USER_MODEL = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+
+# implement your feed with redis as storage
+
+from stream_framework.feeds.redis import RedisFeed
+from stream_framework.feed_managers.base import Manager
+
+# from .models import Friend, Follow, FriendshipRequest
+
+class TimelineFeed(RedisFeed):
+    key_format = 'feed:timeline:%(user_id)s'
+
+class FollowersFeed(RedisFeed):
+    key_format = 'feed:followers:%(user_id)s'
+
+class FriendsFeed(RedisFeed):
+    key_format = 'feed:friends:%(user_id)s'
+
+class UserFeed(RedisFeed):
+    key_format = 'feed:user:%(user_id)s'
+
+
+
+class FriendsFeedManager(Manager):
+    feed_classes = dict(
+        friends=FriendsFeed,
+    )
+    user_feed_class = UserFeed
+    def add_post(self, post):
+        activity = post.create_activity()
+        print('myself adding')
+        # add user activity adds it to the user feed, and starts the fanout
+        self.add_user_activity(post.user.user_id, activity)
+
+    def get_user_follower_ids(self, user_id):
+        ids = Friend.objects.filter((
+                Q(from_user=user_id) |
+                Q(to_user=user_id)
+            )).values_list('user_id', flat=True)
+        return {FanoutPriority.HIGH:ids}
+
+friendFeedManager = FriendsFeedManager()
+
+class FollowersFeedManager(Manager):
+    feed_classes = dict(
+        followers=FollowersFeed,
+        # friends = FriendsFeed
+    )
+    user_feed_class = UserFeed
+    def add_post(self, post):
+        activity = post.create_activity()
+        # add user activity adds it to the user feed, and starts the fanout
+        self.add_user_activity(post.user.user_id, activity)
+
+    def get_user_follower_ids(self, user_id):
+        ids = Follow.objects.filter(followee=user_id).values_list('user_id', flat=True)
+        return {FanoutPriority.HIGH:ids}
+
+followFeedManager = FollowersFeedManager()
+
+
+from celery.decorators import task
+from celery.utils.log import get_task_logger
+from stream_django.feed_manager import feed_manager
+import time
+
+
+logger = get_task_logger(__name__)
+
+
+@task(name="after_following_task")
+def after_following_task(follower_id, followee_id):
+    """To be executed when a user follows someone"""
+    try:
+        # time.wait(20)
+
+        followee_feed = FollowersFeed(followee_id)
+        follower_timeline = TimelineFeed(follower_id)
+
+        # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
+        followFeedManager.follow_feed(follower_timeline, followee_feed) 
+
+        return 'hellos'
+
+    except Exception as e:
+        print(e)
+
+@task(name="after_unfollowing_task")
+def after_unfollowing_task(follower_id, followee_id):
+    """To be executed when a user unfollows someone"""
+    try:
+        # time.wait(20)
+
+        followee_feed = feed_manager.get_feed('followers', followee_id)
+        follower_timeline = feed_manager.get_feed('timeline', follower_id)
+
+        follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id, keep_history=True)  
+        logger.info("Done")
+
+        return 'hellos'
+
+    except Exception as e:
+        print(e)
+
+@task(name="after_friending_task")
+def after_friending_task(from_user_id, to_user_id):
+    """To be executed when a user friends someone"""
+    try:
+        # time.wait(20)
+
+        followee_feed = feed_manager.get_feed('followers', to_user_id)
+        friends_feed = feed_manager.get_feed('friends', to_user_id)
+
+        follower_timeline = feed_manager.get_feed('timeline', from_user_id)
+
+        follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
+        follower_timeline.follow(friends_feed.slug, friends_feed.user_id) 
+
+
+        logger.info("Done")
+
+        return 'hellos'
+
+    except Exception as e:
+        print(e)
+
+@task(name="after_unfriending_task")
+def after_unfriending_task(from_user_id, to_user_id):
+    """To be executed when a user unfriends someone"""
+    try:
+        # time.wait(20)
+
+        # followee_feed = feed_manager.get_feed('followers', to_user_id)
+        friends_feed = feed_manager.get_feed('friends', to_user_id)
+
+        follower_timeline = feed_manager.get_feed('timeline', from_user_id)
+
+        # follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id) 
+        follower_timeline.unfollow(friends_feed.slug, friends_feed.user_id) 
+
+
+        logger.info("Done")
+
+        return 'hellos'
+
+    except Exception as e:
+        print(e)
+
+
+
+
+
 
 CACHE_TYPES = {
     'friends': 'f-%s',
@@ -78,6 +229,8 @@ def bust_cache(type, user_pk):
     bust_keys = BUST_CACHES[type]
     keys = [CACHE_TYPES[k] % user_pk for k in bust_keys]
     cache.delete_many(keys)
+
+
 
 
 @python_2_unicode_compatible
@@ -545,53 +698,3 @@ class Follow(models.Model):
             raise ValidationError("Users cannot follow themselves.")
         super(Follow, self).save(*args, **kwargs)
 
-@receiver(following_created)
-def following_handler(sender, following, **kwargs):
-    try:
-
-        # print('dfvdfvfdvf')
-        follower = following.follower
-        followee = following.followee
-
-        followee_feed = feed_manager.get_feed('followers', followee.user_id)
-        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
-
-        follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
-
-        # print('usdbdsbcbsjdhd')  
-    except Exception as e:
-        print(e)
-
-@receiver(following_removed)
-def unfollowing_handler(sender, following, **kwargs):
-    try:
-
-        # print('dfvdfvfdvf')
-        follower = following.follower
-        followee = following.followee
-
-        followee_feed = feed_manager.get_feed('followers', followee.user_id)
-        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
-
-        follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id, keep_history=True)  
-
-        # print('usdbdsbcbsjdhd')  
-    except Exception as e:
-        print(e)
-
-@receiver(following_created)
-def friending_handler(sender, following, **kwargs):
-    try:
-
-        # print('dfvdfvfdvf')
-        follower = following.follower
-        followee = following.followee
-
-        followee_feed = feed_manager.get_feed('followers', followee.user_id)
-        follower_timeline = feed_manager.get_feed('timeline', follower.user_id)
-
-        follower_timeline.follow(followee_feed.slug, followee_feed.user_id)  
-
-        # print('usdbdsbcbsjdhd')  
-    except Exception as e:
-        print(e)

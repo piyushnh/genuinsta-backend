@@ -20,6 +20,7 @@ from django.core.cache import cache
 import logging
 from stream_django.feed_manager import feed_manager
 from stream_django.enrich import Enrich
+from apps.friendship.models import TimelineFeed
 
 enricher = Enrich()
 logger = logging.getLogger(__name__)
@@ -197,19 +198,21 @@ def get_timeline(request):
     # """
     # """
     try:
+        activities = TimelineFeed(request.user.user_id)[:10]
+        print(activities)
         
-        activities = feed_manager.get_feed('timeline', request.user.user_id).get()['results']
-        enriched_activities = enricher.enrich_activities(activities)
-        data = []
-        for activity in enriched_activities:
-             data.append(activity.activity_data)
+        # activities = feed_manager.get_feed('timeline', request.user.user_id).get()['results']
+        # enriched_activities = enricher.enrich_activities(activities)
+        # data = []
+        # for activity in enriched_activities:
+        #      data.append(activity.activity_data)
 
-        if len(data) > 1:
-            serializer = ActivitySerializer(data,  context={'request': request}, many = True)
-        elif len(data) == 1:
-            serializer = ActivitySerializer(data,  context={'request': request})
-        else:
-            return Response([], status=status.HTTP_200_OK)
+        # if len(data) > 1:
+        #     serializer = ActivitySerializer(data,  context={'request': request}, many = True)
+        # elif len(data) == 1:
+        #     serializer = ActivitySerializer(data,  context={'request': request})
+        # else:
+        #     return Response([], status=status.HTTP_200_OK)
 
         return Response(serializer.data , status=status.HTTP_200_OK)
     except Exception as e:
