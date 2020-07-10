@@ -7,6 +7,15 @@ from phonenumber_field.widgets import PhoneNumberPrefixWidget
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+from django.contrib.postgres.operations import CreateExtension
+from django.db import migrations
+
+class Migration(migrations.Migration):
+
+    operations = [
+        CreateExtension('postgis'),
+    ]
+
 class CustomUser(AbstractUser):
     # is_merchant = models.BooleanField(default=False)
     mobile_number = PhoneNumberField(
@@ -44,5 +53,7 @@ class CustomUser(AbstractUser):
       
         """
         return "user_%s" % self.user_id
+
+    
 
 

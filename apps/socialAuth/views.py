@@ -12,13 +12,13 @@ from requests.exceptions import HTTPError
 from django.shortcuts import redirect
 from social_django.utils import psa
 
-from apiclient import discovery
-import httplib2
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
+# from apiclient import discovery
+# import httplib2
+# import google.oauth2.credentials
+# import google_auth_oauthlib.flow
 
-from oauth2client import client
-from oauth2client.contrib.django_util.storage import DjangoORMStorage
+# from oauth2client import client
+# from oauth2client.contrib.django_util.storage import DjangoORMStorage
 # from .models import CredentialsModel/
 
 import requests

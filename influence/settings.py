@@ -170,11 +170,11 @@ WSGI_APPLICATION = 'influence.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'genuinsta',
         'USER': 'piyushnh',
         'PASSWORD': 'piyush1235',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432',
         # 'OPTIONS': {'charset': 'utf8mb4'},
 
@@ -292,8 +292,8 @@ CACHES = {
 CACHE_TTL = 60 * 60 * 24
 
 # CELERY STUFF
-BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL='redis://redis:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
