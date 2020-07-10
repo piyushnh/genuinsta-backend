@@ -203,7 +203,7 @@ def get_timeline(request):
         data = []
         for activity in enriched_activities:
              data.append(activity.activity_data)
-
+        print(data)
         if len(data) > 1:
             serializer = ActivitySerializer(data,  context={'request': request}, many = True)
         elif len(data) == 1:
