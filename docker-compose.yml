@@ -7,6 +7,7 @@ services:
     container_name: genuinstagram_backend
     volumes:
       - .:/genuinstagram_backend
+      - .:/genuinsta_backend
     ports:
       - 8000:8000
     depends_on:

@@ -150,11 +150,9 @@ def toggle_bookmark(request, postId):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
 def publish_post(request):
-    
     try:
         data = request.data
 
-        print(data)
 
         post = Post.objects.create(image=data['image'], description=data['description'],
                                     location=data['location'], privacy_type= data['privacy_type'], user=request.user)
