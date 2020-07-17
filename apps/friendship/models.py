@@ -13,6 +13,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.dispatch import Signal
 from django.dispatch import receiver
 from stream_django.feed_manager import feed_manager
+from stream_framework.feed_managers.base import FanoutPriority
+import random
 
 from friendship.exceptions import AlreadyExistsError, AlreadyFriendsError
 from friendship.signals import (
@@ -55,10 +57,12 @@ class UserFeed(RedisFeed):
 
 
 class FriendsFeedManager(Manager):
+    follow_activity_limit = 50
+
     feed_classes = dict(
-        friends=FriendsFeed,
+        timeline=TimelineFeed,
     )
-    user_feed_class = UserFeed
+    user_feed_class = FriendsFeed
     def add_post(self, post):
         activity = post.create_activity()
         print('myself adding')
@@ -66,27 +70,31 @@ class FriendsFeedManager(Manager):
         self.add_user_activity(post.user.user_id, activity)
 
     def get_user_follower_ids(self, user_id):
-        ids = Friend.objects.filter((
-                Q(from_user=user_id) |
-                Q(to_user=user_id)
-            )).values_list('user_id', flat=True)
+        from itertools import chain
+        ids1 = Friend.objects.filter(from_user=user_id).values_list('from_user__user_id', flat=True)
+        ids2 = Friend.objects.filter(to_user=user_id).values_list('to_user__user_id', flat=True)
+        ids = list(chain(ids1, ids2))
         return {FanoutPriority.HIGH:ids}
 
 friendFeedManager = FriendsFeedManager()
 
 class FollowersFeedManager(Manager):
+
+    follow_activity_limit = 50
+
     feed_classes = dict(
-        followers=FollowersFeed,
+        timeline=TimelineFeed,
         # friends = FriendsFeed
     )
-    user_feed_class = UserFeed
+    user_feed_class = FollowersFeed
     def add_post(self, post):
         activity = post.create_activity()
         # add user activity adds it to the user feed, and starts the fanout
         self.add_user_activity(post.user.user_id, activity)
 
     def get_user_follower_ids(self, user_id):
-        ids = Follow.objects.filter(followee=user_id).values_list('user_id', flat=True)
+        ids = Follow.objects.filter(followee=user_id).values_list('follower__user_id', flat=True)
+        print(ids)
         return {FanoutPriority.HIGH:ids}
 
 followFeedManager = FollowersFeedManager()
@@ -113,7 +121,7 @@ def after_following_task(follower_id, followee_id):
         # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
         followFeedManager.follow_feed(follower_timeline, followee_feed) 
 
-        return 'hellos'
+        return 'Done'
 
     except Exception as e:
         print(e)
@@ -122,15 +130,13 @@ def after_following_task(follower_id, followee_id):
 def after_unfollowing_task(follower_id, followee_id):
     """To be executed when a user unfollows someone"""
     try:
-        # time.wait(20)
+        followee_feed = FollowersFeed(followee_id)
+        follower_timeline = TimelineFeed(follower_id)
 
-        followee_feed = feed_manager.get_feed('followers', followee_id)
-        follower_timeline = feed_manager.get_feed('timeline', follower_id)
+        # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
+        followFeedManager.unfollow_feed(follower_timeline, followee_feed) 
 
-        follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id, keep_history=True)  
-        logger.info("Done")
-
-        return 'hellos'
+        return 'Done'
 
     except Exception as e:
         print(e)
@@ -141,18 +147,19 @@ def after_friending_task(from_user_id, to_user_id):
     try:
         # time.wait(20)
 
-        followee_feed = feed_manager.get_feed('followers', to_user_id)
-        friends_feed = feed_manager.get_feed('friends', to_user_id)
+        followee_feed = FollowersFeed(to_user_id)
+        friends_feed = FriendsFeed(to_user_id)
 
-        follower_timeline = feed_manager.get_feed('timeline', from_user_id)
+        follower_timeline = TimelineFeed(from_user_id)
 
-        follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
-        follower_timeline.follow(friends_feed.slug, friends_feed.user_id) 
+        followFeedManager.follow_feed(follower_timeline, followee_feed) 
+        friendFeedManager.follow_feed(follower_timeline, friends_feed) 
+       
 
 
         logger.info("Done")
 
-        return 'hellos'
+        return 'Done'
 
     except Exception as e:
         print(e)
@@ -161,25 +168,18 @@ def after_friending_task(from_user_id, to_user_id):
 def after_unfriending_task(from_user_id, to_user_id):
     """To be executed when a user unfriends someone"""
     try:
-        # time.wait(20)
+        followee_feed = FollowersFeed(to_user_id)
+        friends_feed = FriendsFeed(to_user_id)
 
-        # followee_feed = feed_manager.get_feed('followers', to_user_id)
-        friends_feed = feed_manager.get_feed('friends', to_user_id)
+        follower_timeline = TimelineFeed(from_user_id)
 
-        follower_timeline = feed_manager.get_feed('timeline', from_user_id)
+        followFeedManager.unfollow_feed(follower_timeline, followee_feed) 
+        friendFeedManager.unfollow_feed(follower_timeline, friends_feed) 
 
-        # follower_timeline.unfollow(followee_feed.slug, followee_feed.user_id) 
-        follower_timeline.unfollow(friends_feed.slug, friends_feed.user_id) 
-
-
-        logger.info("Done")
-
-        return 'hellos'
+        return 'Done'
 
     except Exception as e:
         print(e)
-
-
 
 
 
@@ -244,6 +244,8 @@ class FriendshipRequest(models.Model):
     created = models.DateTimeField(default=timezone.now)
     rejected = models.DateTimeField(blank=True, null=True)
     viewed = models.DateTimeField(blank=True, null=True)
+    id = models.BigIntegerField(primary_key = True)
+
 
     class Meta:
         verbose_name = _('Friendship Request')
@@ -255,11 +257,9 @@ class FriendshipRequest(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.id:
-            newId = uuid.uuid4().int/100000000000000000000000000000000
+            newId = random.randrange(1000000000, 10000000000)
 
-
-
-            if not FriendshipRequest.objects.filter(id = newId).exists():
+            if not Follow.objects.filter(id = newId).exists():
                 self.id = newId
 
         super().save(*args, **kwargs)
@@ -567,6 +567,7 @@ class Friend(models.Model):
     to_user = models.ForeignKey(AUTH_USER_MODEL, related_name='friends', on_delete=models.CASCADE)
     from_user = models.ForeignKey(AUTH_USER_MODEL, related_name='_unused_friend_relation', on_delete=models.CASCADE)
     created = models.DateTimeField(default=timezone.now)
+    id = models.BigIntegerField(primary_key = True)
 
     objects = FriendshipManager()
 
@@ -579,6 +580,12 @@ class Friend(models.Model):
         return "User #%s is friends with #%s" % (self.to_user_id, self.from_user_id)
 
     def save(self, *args, **kwargs):
+        while not self.id:
+            newId = random.randrange(1000000000, 10000000000)
+
+            if not Follow.objects.filter(id = newId).exists():
+                self.id = newId
+
         # Ensure users can't be friends with themselves
         if self.to_user == self.from_user:
             raise ValidationError("Users cannot be friends with themselves.")
@@ -678,6 +685,7 @@ class FollowingManager(models.Manager):
 @python_2_unicode_compatible
 class Follow(models.Model):
     """ Model to represent Circles """
+    id = models.BigIntegerField(primary_key=True)
     follower = models.ForeignKey(AUTH_USER_MODEL, related_name='following', on_delete=models.CASCADE)
     followee = models.ForeignKey(AUTH_USER_MODEL, related_name='followers', on_delete=models.CASCADE)
     created = models.DateTimeField(default=timezone.now)
@@ -693,8 +701,15 @@ class Follow(models.Model):
         return "User #%s follows #%s" % (self.follower_id, self.followee_id)
 
     def save(self, *args, **kwargs):
+        while not self.id:
+            newId = random.randrange(1000000000, 10000000000)
+
+            if not Follow.objects.filter(id = newId).exists():
+                self.id = newId
         # Ensure users can't be friends with themselves
         if self.follower == self.followee:
             raise ValidationError("Users cannot follow themselves.")
         super(Follow, self).save(*args, **kwargs)
 
+
+   

@@ -71,18 +71,22 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class ActivitySerializer(serializers.Serializer):
-    id = serializers.UUIDField()
-    foreign_id = serializers.CharField()
+    # id = serializers.UUIDField()
+    # foreign_id = serializers.CharField()
     verb = serializers.CharField()
     time = serializers.DateTimeField()
     post = serializers.SerializerMethodField()
     user = serializers.SerializerMethodField()
 
     def get_post(self, activity):
-        return PostSerializer(activity['object'], context = self.context).data
+        post_id = activity.object_id
+        post = Post.objects.get(post_id = post_id)
+        return PostSerializer(post, context = self.context).data
 
     def get_user(self, activity):
-        return UserProfileSerializer(activity['actor'], context = self.context).data
+        user_id = activity.actor_id
+        user = User.objects.get(user_id = user_id)
+        return UserProfileSerializer(user, context = self.context).data
 
 
     # def __init__(self, *args, **kwargs):

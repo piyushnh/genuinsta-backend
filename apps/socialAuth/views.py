@@ -204,9 +204,9 @@ def authenticate(request):
 
         uid = decoded_token.get('uid')
         try:
-            user = User.objects.get(user_id=uid)
-        except User.DoesNotExist:
-            user = User(user_id=uid)
+            user = User.objects.get(social_id=uid)
+        except :
+            user = User(social_id=uid)
             try:
                 name = data['fullName'].split()    
                 user.first_name = name[0]

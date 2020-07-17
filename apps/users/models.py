@@ -6,6 +6,7 @@ from phonenumber_field.widgets import PhoneNumberPrefixWidget
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import random
 
 class CustomUser(AbstractUser):
     # is_merchant = models.BooleanField(default=False)
@@ -16,7 +17,8 @@ class CustomUser(AbstractUser):
     )
     profile_picture = models.ImageField(upload_to = 'profile_pictures', null = True)
     bio  = models.CharField(max_length=500, blank=True, null=True)
-    user_id = models.CharField(max_length=500, unique=True, primary_key=True,)
+    user_id = models.BigIntegerField(primary_key=True)
+    social_id = models.CharField(unique=True, max_length=32, null=True)
 
     ACCOUNT_TYPE_CHOICES = (
     ("PUBLIC", "public"),
@@ -44,5 +46,15 @@ class CustomUser(AbstractUser):
       
         """
         return "user_%s" % self.user_id
+
+    def save(self, *args, **kwargs):
+        while not self.user_id:
+            newId = random.randrange(1000000000, 10000000000)
+
+            if not CustomUser.objects.filter(user_id = newId).exists():
+                self.user_id = newId
+
+
+        super().save(*args, **kwargs)
 
 

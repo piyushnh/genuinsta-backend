@@ -1,4 +1,5 @@
 from django.db import models
+import sys
 import logging
 try:
     from django.contrib.auth import get_user_model
@@ -22,14 +23,26 @@ import uuid
 import pytz
 from guardian.shortcuts import assign_perm
 from django.utils.timezone import is_aware, make_naive
-from apps.friendship.models import followFeedManager
+from apps.friendship.models import followFeedManager, friendFeedManager
+import random
+
+from stream_framework.verbs import register
+from stream_framework.verbs.base import Verb
+
+
+class PostVerb(Verb):
+    id = 5
+    infinitive = 'post'
+    past_tense = 'posted'
+
+register(PostVerb)
 
 # import signals
 
 # Create your models here.
 
 class Post(models.Model):
-    post_id = models.IntegerField(primary_key=True)
+    post_id = models.BigIntegerField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts',  )
     description = models.TextField(null = False)
     image = fields.ImageField(upload_to='post', dependencies=[
@@ -53,7 +66,6 @@ class Post(models.Model):
 
     def create_activity(self):
         from stream_framework.activity import Activity
-        from .verbs import Post as PostVerb
         activity = Activity(
             self.user.user_id,
             PostVerb,
@@ -98,7 +110,7 @@ class Post(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.post_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Post.objects.filter(post_id = newId).exists():
                 self.post_id = newId
@@ -123,7 +135,7 @@ class Post(models.Model):
 
 
 class PostTags(models.Model):
-    post_tag_id = models.IntegerField(primary_key=True)
+    post_tag_id = models.BigIntegerField(primary_key=True)
     post_id = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='post_tags',  )
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='post_tags',  )
      
@@ -133,7 +145,7 @@ class PostTags(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.post_tag_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not PostTags.objects.filter(post_tag_id = newId).exists():
                 self.post_tag_id = newId
@@ -141,7 +153,7 @@ class PostTags(models.Model):
         super().save(*args, **kwargs)
 
 class ProfileViews(models.Model):
-    view_id = models.IntegerField(primary_key=True)
+    view_id = models.BigIntegerField(primary_key=True)
     view_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='outgoing_views',)
     view_to = models.ForeignKey(User,on_delete=models.CASCADE,related_name='incoming_views',)
     view_time = models.DateTimeField(auto_now_add=True, null=True)
@@ -152,7 +164,7 @@ class ProfileViews(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.view_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not ProfileViews.objects.filter(view_id = newId).exists():
                 self.view_id = newId
@@ -160,7 +172,7 @@ class ProfileViews(models.Model):
         super().save(*args, **kwargs)
 
 class Recommendation(models.Model):
-    recommend_id = models.IntegerField(primary_key=True)
+    recommend_id = models.BigIntegerField(primary_key=True)
     recommend_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='outgoing_recommendatiions',)
     recommend_to = models.ForeignKey(User,on_delete=models.CASCADE,related_name='incoming_recommendatiions',)
     recommend_time = models.DateTimeField(auto_now_add=True, null=True)
@@ -171,7 +183,7 @@ class Recommendation(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.recommend_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Recommendation.objects.filter(recommend_id = newId).exists():
                 self.recommend_id = newId
@@ -179,7 +191,7 @@ class Recommendation(models.Model):
         super().save(*args, **kwargs)
 
 class Tag(models.Model):
-    tag_id = models.IntegerField(primary_key=True)
+    tag_id = models.BigIntegerField(primary_key=True)
     post = models.CharField(max_length=255, blank=False, null=False)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='tags',  )
     post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='tags',  )
@@ -189,7 +201,7 @@ class Tag(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.tag_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Tag.objects.filter(tag_id = newId).exists():
                 self.tag_id = newId
@@ -197,7 +209,7 @@ class Tag(models.Model):
         super().save(*args, **kwargs)
 
 class HashTag(models.Model):
-    hashtag_id = models.IntegerField(primary_key=True)
+    hashtag_id = models.BigIntegerField(primary_key=True)
     posts = models.ManyToManyField(Post,related_name='hashtags',  )
     # user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='hashtags',  )
     hashtag_time = models.DateTimeField(auto_now_add=True, null=False)
@@ -209,7 +221,7 @@ class HashTag(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.hashtag_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not HashTag.objects.filter(hashtag_id = newId).exists():
                 self.hashtag_id = newId
@@ -217,7 +229,7 @@ class HashTag(models.Model):
         super().save(*args, **kwargs)
 
 class Like(models.Model):
-    like_id = models.IntegerField(primary_key=True)
+    like_id = models.BigIntegerField(primary_key=True)
     post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='likes',  )
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='likes',  )
     like_time = models.DateTimeField(auto_now_add=True, null=False)
@@ -230,7 +242,7 @@ class Like(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.like_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Like.objects.filter(like_id = newId).exists():
                 self.like_id = newId
@@ -239,7 +251,7 @@ class Like(models.Model):
         super().save(*args, **kwargs)
 
 class Comment(models.Model):
-    comment_id = models.IntegerField(primary_key=True)
+    comment_id = models.BigIntegerField(primary_key=True)
     post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='comments',  )
     comment_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='comments',  )
     comment_time = models.DateTimeField(auto_now_add=True, null=False)
@@ -260,7 +272,7 @@ class Comment(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.comment_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Comment.objects.filter(comment_id = newId).exists():
                 self.comment_id = newId
@@ -269,7 +281,7 @@ class Comment(models.Model):
         super().save(*args, **kwargs)
 
 class Bookmark(models.Model):
-    bookmark_id = models.IntegerField(primary_key=True)
+    bookmark_id = models.BigIntegerField(primary_key=True)
     post = models.ForeignKey(Post,on_delete=models.CASCADE,related_name='bookmarks',  )
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='bookmarks',  )
     bookmark_time = models.DateTimeField(auto_now_add=True, null=False)
@@ -280,7 +292,7 @@ class Bookmark(models.Model):
 
     def save(self, *args, **kwargs):
         while not self.bookmark_id:
-            newId = random.randrange(100000000, 1000000000)
+            newId = random.randrange(1000000000, 10000000000)
 
             if not Bookmark.objects.filter(bookmark_id = newId).exists():
                 self.bookmark_id = newId
@@ -300,7 +312,12 @@ def post_handler(sender, instance, **kwargs):
         post = instance
         # assign_perm('posts.change_comment', post.user, post)
         assign_perm('posts.delete_post', post.user, post)
-        followFeedManager.add_post(post)
+        if post.privacy_type.lower() == 'friends':
+            friendFeedManager.add_post(post)
+        elif post.privacy_type.lower() == 'followers':
+            followFeedManager.add_post(post)
+            friendFeedManager.add_post(post)
+
 
 
     
