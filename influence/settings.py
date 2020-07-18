@@ -69,13 +69,13 @@ INSTALLED_APPS = [
     'apps.socialAuth',
     'apps.groups',
     'apps.posts',
+    'stream_framework',
     
 
     #Importing App Configs
     # 'apps.posts.apps.PostsConfig',
     # 'apps.friendship.apps.FriendshipConfig'
 
-    'stream_django',
 
 
 ] 

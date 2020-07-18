@@ -12,7 +12,6 @@ from django.utils.encoding import python_2_unicode_compatible
 
 from django.dispatch import Signal
 from django.dispatch import receiver
-from stream_django.feed_manager import feed_manager
 from stream_framework.feed_managers.base import FanoutPriority
 import random
 
@@ -65,14 +64,19 @@ class FriendsFeedManager(Manager):
     user_feed_class = FriendsFeed
     def add_post(self, post):
         activity = post.create_activity()
-        print('myself adding')
         # add user activity adds it to the user feed, and starts the fanout
         self.add_user_activity(post.user.user_id, activity)
 
+    def remove_post(self, post):
+        activity = post.create_activity()
+        # removes the post from the user's followers feeds
+        self.remove_user_activity(post.user.user_id, activity)
+
+
     def get_user_follower_ids(self, user_id):
         from itertools import chain
-        ids1 = Friend.objects.filter(from_user=user_id).values_list('from_user__user_id', flat=True)
-        ids2 = Friend.objects.filter(to_user=user_id).values_list('to_user__user_id', flat=True)
+        ids1 = Friend.objects.filter(from_user=user_id).values_list('to_user__user_id', flat=True)
+        ids2 = Friend.objects.filter(to_user=user_id).values_list('from_user__user_id', flat=True)
         ids = list(chain(ids1, ids2))
         return {FanoutPriority.HIGH:ids}
 
@@ -92,6 +96,11 @@ class FollowersFeedManager(Manager):
         # add user activity adds it to the user feed, and starts the fanout
         self.add_user_activity(post.user.user_id, activity)
 
+    def remove_post(self, post):
+        activity = post.create_activity()
+        # removes the post from the user's followers feeds
+        self.remove_user_activity(post.user.user_id, activity)
+
     def get_user_follower_ids(self, user_id):
         ids = Follow.objects.filter(followee=user_id).values_list('follower__user_id', flat=True)
         print(ids)
@@ -102,8 +111,8 @@ followFeedManager = FollowersFeedManager()
 
 from celery.decorators import task
 from celery.utils.log import get_task_logger
-from stream_django.feed_manager import feed_manager
 import time
+
 
 
 logger = get_task_logger(__name__)
@@ -271,16 +280,16 @@ class FriendshipRequest(models.Model):
             to_user=self.to_user
         )
 
-        after_friending_task.delay(from_user=self.from_user,
-                         to_user = self.to_user)
+        after_friending_task.delay(from_user_id=self.from_user.user_id,
+                         to_user_id = self.to_user.user_id)
         
-        relation2 = Friend.objects.create(
-            from_user=self.to_user,
-            to_user=self.from_user
-        )
+        # relation2 = Friend.objects.create(
+        #     from_user=self.to_user,
+        #     to_user=self.from_user
+        # )
 
-        after_friending_task.delay(from_user=self.to_user,
-                         to_user = self.from_user)
+        # after_friending_task.delay(from_user=self.to_user,
+        #                  to_user = self.from_user)
 
 
         # friendship_request_accepted.send(

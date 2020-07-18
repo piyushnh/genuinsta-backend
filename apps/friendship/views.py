@@ -7,6 +7,7 @@ except ImportError:
     from django.contrib.auth.models import User
     user_model = User
 
+import traceback
 from django.shortcuts import render, get_object_or_404, redirect
 
 #rest_framework imports
@@ -110,11 +111,11 @@ def friendship_request_accept(request, from_username):
     from_user = user_model.objects.get(username=from_username)
     to_user = request.user
     try:
-        f_request = FriendshipRequest.objects.get(from_user, to_user)
+        f_request = FriendshipRequest.objects.get(from_user = from_user, to_user = to_user)
         f_request.accept()
         return Response(None, status=status.HTTP_200_OK)
     except Exception as e:
-        print(e)
+        traceback.print_exc()
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))

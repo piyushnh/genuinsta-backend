@@ -7,11 +7,10 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
 
-from stream_django.activity import Activity
 
 
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 
 from apps.groups.models import Group
 from sorl.thumbnail import  get_thumbnail
@@ -124,6 +123,8 @@ class Post(models.Model):
                 h = h.lower()
                 hashtag, created = HashTag.objects.get_or_create(hashtag = h)
                 hashtag.posts.add(self)
+
+
         
         
         except Exception as e:
@@ -317,6 +318,17 @@ def post_handler(sender, instance, **kwargs):
         elif post.privacy_type.lower() == 'followers':
             followFeedManager.add_post(post)
             friendFeedManager.add_post(post)
+        
+
+@receiver(post_delete, sender=Post)
+def post_delete_handler(sender, instance, **kwargs):
+        post = instance
+        followFeedManager.remove_post(post)
+        friendFeedManager.remove_post(post)
+        
+
+
+
 
 
 

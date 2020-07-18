@@ -1,6 +1,5 @@
 from django.dispatch import Signal
 from django.dispatch import receiver
-from stream_django.feed_manager import feed_manager
 
 
 

@@ -18,11 +18,10 @@ except ImportError:
 
 from django.core.cache import cache
 import logging
-from stream_django.feed_manager import feed_manager
-from stream_django.enrich import Enrich
-from apps.friendship.models import TimelineFeed, UserFeed, FollowersFeed
+# from stream_django.enrich import Enrich
+from apps.friendship.models import (TimelineFeed, UserFeed, FollowersFeed)
 
-enricher = Enrich()
+# enricher = Enrich()
 logger = logging.getLogger(__name__)
 
 
@@ -166,7 +165,7 @@ def publish_post(request):
         print(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
 def modify_post(request, postId):
     # """
@@ -194,13 +193,32 @@ def modify_post(request, postId):
 
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, ))
+def delete_post(request, postId):
+    # """
+    # """
+    try:
+
+
+        if not request.user.has_perm('posts.delete_post', postId):
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        post = Post.objects.get(post_id = postId).delete()
+
+       
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
 def get_timeline(request):
     # """
     # """
     try:
         # data = TimelineFeed(request.user.user_id)[:]
         data = TimelineFeed(request.user.user_id)[:10]
-        print(data)
+        # print(data)
         # print(activities)
        
         
