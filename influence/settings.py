@@ -170,12 +170,12 @@ WSGI_APPLICATION = 'influence.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'genuinstagram',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'genuinsta',
         'USER': 'piyushnh',
         'PASSWORD': 'piyush1235',
-        'HOST': 'localhost',
-        'PORT': '',
+        'HOST': 'db',
+        'PORT': '5432',
         # 'OPTIONS': {'charset': 'utf8mb4'},
 
     }
@@ -269,7 +269,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('redis', 6379)], #TODO - changed for docker
         },
     },
 }
@@ -278,7 +278,7 @@ CHANNEL_LAYERS = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
+        "LOCATION": "redis://redis:6379/1",#TODO changed for docker
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient"
         },
@@ -292,8 +292,8 @@ CACHES = {
 CACHE_TTL = 60 * 60 * 24
 
 # CELERY STUFF
-BROKER_URL = 'redis://localhost:6379'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379'
+CELERY_BROKER_URL='redis://redis:6379/0' #TODO both lines changed for docker
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
 CELERY_ACCEPT_CONTENT = ['application/json', 'pickle']
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'json'

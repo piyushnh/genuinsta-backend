@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    container_name: genuinstagram_backend
+    volumes:
+      - .:/genuinstagram_backend
+      - .:/genuinsta_backend
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+  db:
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=piyushnh
+      - POSTGRES_PASSWORD=piyush1235
+      - POSTGRES_DB=genuinsta
+  redis:
+    container_name: 'redis'
+    image: 'redis:3.0.6'
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - 'redis_data:/data'
+  celery:
+    build: .
+    command: celery -A influence worker -l info
+    volumes:
+      - .:/genuinstagram_backend
+    depends_on:
+      - web
+      - db
+      - redis
+  
+
+volumes:
+  postgres_data:
+  redis_data:
+    

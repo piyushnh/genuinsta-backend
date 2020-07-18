@@ -115,6 +115,7 @@ def get_owner_profile(request):
     try:
         # print(request)
         user = request.user
+        print(user)
 
         serializedProfile = UserProfileSerializer(user,  context={'request': request})
         return Response(serializedProfile.data,status=status.HTTP_200_OK)
