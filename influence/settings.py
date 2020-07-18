@@ -294,7 +294,7 @@ CACHE_TTL = 60 * 60 * 24
 # CELERY STUFF
 CELERY_BROKER_URL='redis://redis:6379/0' #TODO both lines changed for docker
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
-CELERY_ACCEPT_CONTENT = ['application/json', 'pickle']
+CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'json'
 # CELERY_TIMEZONE = 'Africa/Nairobi'

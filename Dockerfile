@@ -25,6 +25,7 @@ COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
 RUN apt-get install -y libgdal-dev
+# RUN apt-get install postgres
 
 # Copy the current directory contents into the container at /music_service
 COPY . /genuinsta_backend/
