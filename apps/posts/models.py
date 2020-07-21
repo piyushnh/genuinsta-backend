@@ -44,10 +44,7 @@ class Post(models.Model):
     post_id = models.BigIntegerField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts',  )
     description = models.TextField(null = False)
-    image = fields.ImageField(upload_to='post', dependencies=[
-        FileDependency( processor=ImageProcessor(
-            format='JPEG', scale={'max_width': 640, 'max_height': 320})),
-    ]) 
+    image = fields.ImageField(upload_to='post') 
     post_time = models.DateTimeField(auto_now_add=True, null=False)
     location = models.TextField(null=True)
     PRIVACY_TYPE_CHOICES = (

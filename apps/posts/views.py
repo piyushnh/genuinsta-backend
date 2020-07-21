@@ -216,7 +216,6 @@ def get_timeline(request):
     try:
         # data = TimelineFeed(request.user.user_id)[:]
         data = TimelineFeed(request.user.user_id)[:10]
-        # print(data)
         # print(activities)
        
         
@@ -230,7 +229,7 @@ def get_timeline(request):
             serializer = ActivitySerializer(data,  context={'request': request}, many = True)
         elif len(data) == 1:
             serializer = ActivitySerializer(data[0],  context={'request': request})
-            serializer = [serializer]
+            serializer.data = [serializer.data]
         else:
             return Response([], status=status.HTTP_200_OK)
 

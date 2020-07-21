@@ -4,6 +4,7 @@ services:
   web:
     build: .
     command: python manage.py runserver 0.0.0.0:8000
+    network_mode: "host"
     container_name: genuinstagram_backend
     volumes:
       - .:/genuinstagram_backend
@@ -13,8 +14,10 @@ services:
     depends_on:
       - db
       - redis
+    
   db:
     image: postgres:12.0-alpine
+    network_mode: "host"
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -22,21 +25,26 @@ services:
       - POSTGRES_PASSWORD=piyush1235
       - POSTGRES_DB=genuinsta
   redis:
-    container_name: 'redis'
-    image: 'redis:3.0.6'
+    # container_name: 'localhost'
+    image: redis:6.0.5-alpine
+    network_mode: "host"
     ports:
-      - '127.0.0.1:6379:6379'
+    - "0.0.0.0:6379:6379"
     volumes:
       - 'redis_data:/data'
   celery:
     build: .
     command: celery -A influence worker -l info
+    network_mode: "host"
+    environment:
+      - C_FORCE_ROOT=true
     volumes:
       - .:/genuinstagram_backend
     depends_on:
       - web
       - db
       - redis
+    
   
 
 volumes:

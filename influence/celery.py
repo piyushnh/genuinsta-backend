@@ -11,7 +11,7 @@ app = Celery('influence')
 # pickle the object when using Windows.
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
-app.conf.broker_url = 'redis://localhost:6379/0'
+# app.conf.broker_url = 'redis://localhost:6379/0'
 
 
 @app.task(bind=True)
