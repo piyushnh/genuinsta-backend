@@ -36,10 +36,10 @@ urlpatterns = [
     path('modifyPost/<postId>/',
             view = modify_post,
              name="modify_post" ),
-    path('getTimeline/',
+    path('getTimeline/<int:pageSize>/<str:lastId>',
             view = get_timeline,
              name="get_timeline" ),
-    path('addComment/<postId>/',
+    path('addComment/<int:postId>/',
             view = publish_comment,
              name="publish_comment" ),
 

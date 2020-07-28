@@ -103,7 +103,6 @@ class FollowersFeedManager(Manager):
 
     def get_user_follower_ids(self, user_id):
         ids = Follow.objects.filter(followee=user_id).values_list('follower__user_id', flat=True)
-        print(ids)
         return {FanoutPriority.HIGH:ids}
 
 followFeedManager = FollowersFeedManager()
@@ -126,6 +125,7 @@ def after_following_task(follower_id, followee_id):
 
         followee_feed = FollowersFeed(followee_id)
         follower_timeline = TimelineFeed(follower_id)
+
 
         # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
         followFeedManager.follow_feed(follower_timeline, followee_feed) 
@@ -283,13 +283,13 @@ class FriendshipRequest(models.Model):
         after_friending_task.delay(from_user_id=self.from_user.user_id,
                          to_user_id = self.to_user.user_id)
         
-        # relation2 = Friend.objects.create(
-        #     from_user=self.to_user,
-        #     to_user=self.from_user
-        # )
+        relation2 = Friend.objects.create(
+            from_user=self.to_user,
+            to_user=self.from_user
+        )
 
-        # after_friending_task.delay(from_user=self.to_user,
-        #                  to_user = self.from_user)
+        after_friending_task.delay(from_user=self.to_user,
+                         to_user = self.from_user)
 
 
         # friendship_request_accepted.send(
@@ -541,8 +541,7 @@ class FriendshipManager(models.Manager):
         else:
             try:
                 Friend.objects.get(
-                Q(to_user=user1, from_user=user2) |
-                Q(to_user=user2, from_user=user1)
+                to_user=user1, from_user=user2
             )
                 return True
             except Friend.DoesNotExist:
@@ -641,13 +640,10 @@ class FollowingManager(models.Manager):
         # follower_created.send_robust(sender=self, follower=follower)
         # followee_created.send_robust(sender=self, followee=followee)
         # following_created.send_robust(sender=self, following=relation)
-        res = after_following_task.delay(follower.user_id, followee.user_id)
+        after_following_task.delay(follower.user_id, followee.user_id)
 
 
-        print(res.ready())
-
-        if res.ready():
-            print('hello')
+        
 
         bust_cache('followers', followee.pk)
         bust_cache('following', follower.pk)

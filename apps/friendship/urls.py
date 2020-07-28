@@ -7,11 +7,16 @@ from .views import view_friends, friendship_add_friend, friendship_accept, \
     friendship_reject, friendship_cancel, friendship_request_list, \
     friendship_request_list_rejected, friendship_requests_detail, followers,\
     following, follower_add, follower_remove, all_users, friendship_requests_sent_list, remove_friend,\
-    friendship_request_cancel, friendship_request_accept
+    friendship_request_cancel, friendship_request_accept, get_friends_list
 
 app_name = 'friendship'
 
 urlpatterns = [
+    url(
+        regex=r'^getFriendsList/$',
+        view=get_friends_list,
+        name='get_friends_list',
+    ),
     url(
         regex=r'^users/$',
         view=all_users,

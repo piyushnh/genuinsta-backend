@@ -215,6 +215,7 @@ class Manager(object):
         :param feed: the feed to copy to
         :param source_feed: the feed with a list of activities to add
         '''
+
         activities = source_feed[:self.follow_activity_limit]
         if activities:
             return feed.add_many(activities)

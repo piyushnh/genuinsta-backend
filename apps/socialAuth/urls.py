@@ -5,7 +5,7 @@ from django.conf import settings
 from . import views
 
 from .views import (
-                    authenticate
+                    authenticate, logout
                     )
 
 urlpatterns = [
@@ -18,4 +18,7 @@ urlpatterns = [
     url(r'^social/authenticate/$',
             view = authenticate,
              name="authenticate" ),
+    url(r'^logout/$',
+            view = logout,
+             name="logout" ),
 ]

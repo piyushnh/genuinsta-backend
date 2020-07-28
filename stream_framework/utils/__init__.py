@@ -41,6 +41,7 @@ def chunks(iterable, n=10000):
         chunk = tuple(itertools.islice(it, n))
         if not chunk:
             return
+        
         yield chunk
 
 

@@ -25,7 +25,7 @@ from apps.users.serializers import UserProfileSerializer
 
 from .exceptions import AlreadyExistsError
 from .models import Friend, Follow, FriendshipRequest
-from .serializers import (FriendshipRequestSerializer, FriendSerializer,
+from .serializers import (FriendshipRequestSerializer, FriendSerializer, FriendUserSerializer,
                             FollowSerializer, UserSerializer)
 
 get_friendship_context_object_name = lambda: getattr(settings, 'FRIENDSHIP_CONTEXT_OBJECT_NAME', 'user')
@@ -57,6 +57,29 @@ def friendship_add_friend(request, to_username):
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
     return Response(status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def get_friends_list(request):
+    """ Create a FriendshipRequest """
+    # ctx = {'to_username': to_username}
+
+    user = request.user
+    try:
+        friends = Friend.objects.friends(user)
+        serializer = FriendUserSerializer(friends, many=True)
+
+        data = serializer.data
+
+        if len(serializer.data) == 1:
+            data = [serializer.data]
+
+        # async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "friend.request.received", 'request_data': UserProfileSerializer(from_user).data})
+        return Response(data, status=status.HTTP_200_OK)
+        
+    except AlreadyExistsError as e:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
 
 
 @login_required

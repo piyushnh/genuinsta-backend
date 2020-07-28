@@ -23,6 +23,7 @@ import pytz
 from guardian.shortcuts import assign_perm
 from django.utils.timezone import is_aware, make_naive
 from apps.friendship.models import followFeedManager, friendFeedManager
+# from apps.pep.models import Pep
 import random
 
 from stream_framework.verbs import register
@@ -43,10 +44,13 @@ register(PostVerb)
 class Post(models.Model):
     post_id = models.BigIntegerField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='posts',  )
+    pep = models.ForeignKey('pep.Pep', related_name='posts', on_delete=models.DO_NOTHING, null=True)
+    nominees = models.ManyToManyField(User, related_name='nominees')
     description = models.TextField(null = False)
     image = fields.ImageField(upload_to='post') 
     post_time = models.DateTimeField(auto_now_add=True, null=False)
     location = models.TextField(null=True)
+    is_draft = models.BooleanField(default=False)
     PRIVACY_TYPE_CHOICES = (
     ("FRIENDS", "friends"),
     ("FOLLOWERS", "followers"),
@@ -310,12 +314,13 @@ def post_handler(sender, instance, **kwargs):
         post = instance
         # assign_perm('posts.change_comment', post.user, post)
         assign_perm('posts.delete_post', post.user, post)
-        if post.privacy_type.lower() == 'friends':
-            friendFeedManager.add_post(post)
-        elif post.privacy_type.lower() == 'followers':
-            followFeedManager.add_post(post)
-            friendFeedManager.add_post(post)
-        
+        if not post.is_draft:
+            if post.privacy_type.lower() == 'friends':
+                friendFeedManager.add_post(post)
+            elif post.privacy_type.lower() == 'followers':
+                followFeedManager.add_post(post)
+                friendFeedManager.add_post(post)
+            
 
 @receiver(post_delete, sender=Post)
 def post_delete_handler(sender, instance, **kwargs):

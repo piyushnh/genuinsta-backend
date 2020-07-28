@@ -62,12 +62,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     # areFriends = serializers.BooleanField(default = False)
     firstname = serializers.CharField(source='first_name')
     surname = serializers.CharField(source='last_name')
+    # profile_picture = serializers.SerializerMethodField()
  
     class Meta:
         model = User
         fields = ['firstname', 'surname', 'email',  'mobile_number', 'bio', 
                     'profile_picture', 'date_joined', 'isFollowing',
                     'friendshipStatus', 'username','sentFriendRequestId', 'receivedFriendRequestId' ]
+
+    # def get_profile_picture(self, that_user, **kwargs):
+    #     if that_user.profile_picture:
+    #         return that_user.profile_picture
+    #     elif that_user.profile_picture_url:
+    #         return that_user.profile_picture_url
 
     def get_isFollowing(self, that_user, **kwargs):
         request = self.context.get('request')

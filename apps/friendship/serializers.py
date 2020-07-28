@@ -13,9 +13,14 @@ class FriendshipRequestSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
 class FriendSerializer(serializers.ModelSerializer):
+    class Meta:
+      model = Friend
+      fields = '__all__'
+
+class FriendUserSerializer(serializers.ModelSerializer):
   class Meta:
-    model = Friend
-    fields = '__all__'
+    model = User
+    fields = ('username', 'first_name', 'last_name')
 
 
 class FollowSerializer(serializers.ModelSerializer):

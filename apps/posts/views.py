@@ -153,9 +153,11 @@ def publish_post(request):
     try:
         data = request.data
 
+        isDraft = True if data['isDraft'] == 'True' else False
 
         post = Post.objects.create(image=data['image'], description=data['description'],
-                                    location=data['location'], privacy_type= data['privacy_type'], user=request.user)
+                                    location=data['location'], privacy_type= data['privacyType'], is_draft = isDraft,
+                                     user=request.user)
         serializer = PostSerializer(post, context={'request': request})
         return Response(serializer.data ,status=status.HTTP_200_OK)
     except Exception as e:
@@ -208,15 +210,35 @@ def delete_post(request, postId):
         logger.exception(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+
 @api_view(['GET'])
 @permission_classes((IsAuthenticated, ))
-def get_timeline(request):
+def get_timeline(request, pageSize, lastId='', ):
     # """
     # """
     try:
-        # data = TimelineFeed(request.user.user_id)[:]
-        data = TimelineFeed(request.user.user_id)[:10]
-        # print(activities)
+        # activities = FollowersFeed(request.user.user_id)[:]
+        if lastId == 'null':
+            data = TimelineFeed(request.user.user_id)[0:pageSize]
+        else:
+            data = TimelineFeed(request.user.user_id).filter(activity_id__lt=int(lastId))[0:pageSize]
+
+
+        
+
+        if len(data) < pageSize:
+            hasMore = False
+        elif len(data) == pageSize:
+            hasMore = True
+
+        if len(data) != 0:
+            last_item_id = str(data[-1].serialization_id)
+        else:
+            last_item_id = lastId
+            
+
+
        
         
         # activities = feed_manager.get_feed('timeline', request.user.user_id).get()['results']
@@ -227,13 +249,14 @@ def get_timeline(request):
 
         if len(data) > 1:
             serializer = ActivitySerializer(data,  context={'request': request}, many = True)
+            responseData = serializer.data
         elif len(data) == 1:
             serializer = ActivitySerializer(data[0],  context={'request': request})
-            serializer.data = [serializer.data]
+            responseData = [serializer.data]
         else:
             return Response([], status=status.HTTP_200_OK)
 
-        return Response(serializer.data , status=status.HTTP_200_OK)
+        return Response({'timeline': responseData, 'hasMore': hasMore, 'lastItemId': last_item_id} , status=status.HTTP_200_OK)
     except Exception as e:
         logger.exception(e)
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

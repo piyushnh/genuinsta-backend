@@ -6,11 +6,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from django.contrib.auth import login, logout
 
 
-from requests.exceptions import HTTPError
-from django.shortcuts import redirect
-from social_django.utils import psa
 
 # from apiclient import discovery
 # import httplib2
@@ -200,12 +198,14 @@ def authenticate(request):
             pass
 
         if not id_token or not decoded_token:
-            return None
+            print(e)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
         uid = decoded_token.get('uid')
         try:
             user = User.objects.get(social_id=uid)
-        except :
+        except:
             user = User(social_id=uid)
             try:
                 name = data['fullName'].split()    
@@ -216,12 +216,24 @@ def authenticate(request):
             user.email = data['email']
             user.username = data['email']
             # user.avatar_url = data['avatar']  
+            user.profile_picture_url = data['avatar']
             user.mobile_number = ''  
             user.save()
-            
+
         token, _ = Token.objects.get_or_create(user=user)
         user_serializer = AuthUserSerializer(user)    
         return Response( {'token': token.key, 'user': user_serializer.data},status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    try:
+        request.user.auth_token.delete()
+        return Response({},status=status.HTTP_200_OK)
+    except Exception as e:
+        print(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

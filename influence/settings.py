@@ -69,7 +69,8 @@ INSTALLED_APPS = [
     'apps.socialAuth',
     'apps.groups',
     'apps.posts',
-    'stream_framework',
+    'apps.pep'
+    # 'stream_framework',
     
 
     #Importing App Configs

@@ -26,6 +26,7 @@ RUN pip install -r requirements.txt
 
 RUN apt-get install -y libgdal-dev
 
+RUN pip uninstall -y stream-framework 
 
 # RUN apt-get install -y redis-server
 # RUN apt-get install postgres
