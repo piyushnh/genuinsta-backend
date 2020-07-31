@@ -158,6 +158,14 @@ def publish_post(request):
         post = Post.objects.create(image=data['image'], description=data['description'],
                                     location=data['location'], privacy_type= data['privacyType'], is_draft = isDraft,
                                      user=request.user)
+        # for user in data['nomineeList']:
+        nomineeList = []
+        for user in json.loads(data['nomineeList']):
+            nomineeList.append(User.objects.get(username=user['username']))
+           
+        if nomineeList:
+            post.nominees.add(*nomineeList)
+        # post.save()    
         serializer = PostSerializer(post, context={'request': request})
         return Response(serializer.data ,status=status.HTTP_200_OK)
     except Exception as e:

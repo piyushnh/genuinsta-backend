@@ -16,7 +16,7 @@ class AuthUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username','firstname', 'surname', 'email',  'mobile_number', 'user_id' ]
+        fields = ['username','firstname', 'surname', 'email',  'mobile_number' ]
 
 class UserSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
