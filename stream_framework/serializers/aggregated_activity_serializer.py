@@ -12,6 +12,7 @@ class AggregatedActivitySerializer(BaseAggregatedSerializer):
     '''
     Optimized version of the Activity serializer for AggregatedActivities
 
+    IMPORTANT
     v3group;;created_at;;updated_at;;seen_at;;read_at;;aggregated_activities
 
     Main advantage is that it prevents you from increasing the storage of

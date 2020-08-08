@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.5.2-slim
+FROM python:3.7.8-slim
 
 # set work directory
 # WORKDIR /usr/src/app
@@ -26,10 +26,13 @@ RUN pip install -r requirements.txt
 
 RUN apt-get install -y libgdal-dev
 
-RUN pip uninstall -y stream-framework 
 
-# RUN apt-get install -y redis-server
-# RUN apt-get install postgres
+
+# RUN pip install --upgrade pip
+
+
+# RUN pip install asgi_redis
+
 
 # Copy the current directory contents into the container at /music_service
 COPY . /genuinsta_backend/

@@ -1,14 +1,13 @@
 from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.mixins import RetrieveModelMixin, DestroyModelMixin
-from django.contrib.auth.decorators import login_required
 from rest_framework.permissions import IsAuthenticated
 from django.core import serializers
 from django.db.models import OuterRef, Subquery, Count
 import json
+from rest_framework.decorators import api_view, permission_classes
 
-from guardian.shortcuts import remove_perm
+
 
 try:
     from django.contrib.auth import get_user_model
@@ -27,14 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.generics import (
-    ListAPIView,
-    RetrieveAPIView,
-    CreateAPIView,
-    DestroyAPIView,
-    UpdateAPIView
-)
+# from rest_framework.generics import (
+#     ListAPIView,
+#     RetrieveAPIView,
+#     CreateAPIView,
+#     DestroyAPIView,
+#     UpdateAPIView
+# )
 
 from django.contrib.gis.geoip2 import GeoIP2
 g = GeoIP2()

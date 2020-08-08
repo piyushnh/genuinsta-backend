@@ -15,8 +15,8 @@ from django.dispatch import receiver
 from stream_framework.feed_managers.base import FanoutPriority
 import random
 
-from friendship.exceptions import AlreadyExistsError, AlreadyFriendsError
-from friendship.signals import (
+from .exceptions import AlreadyExistsError, AlreadyFriendsError
+from .signals import (
     friendship_request_created, friendship_request_rejected,
     friendship_request_canceled,
     friendship_request_viewed, friendship_request_accepted,
@@ -111,6 +111,7 @@ followFeedManager = FollowersFeedManager()
 from celery.decorators import task
 from celery.utils.log import get_task_logger
 import time
+from apps.notification.models import Notification
 
 
 
@@ -129,6 +130,9 @@ def after_following_task(follower_id, followee_id):
 
         # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
         followFeedManager.follow_feed(follower_timeline, followee_feed) 
+        Notification.objects.create(user = follower_id, recipient=followee_id, category_type='FOLLOWING')
+
+
 
         return 'Done'
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-        Pep,
+        Notification,
         
 )
 
-admin.site.register(Pep)
+admin.site.register(Notification)

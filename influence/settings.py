@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.gis',
 
     #django-channels
+    'fcm_django',
     'channels',
+    'django_eventstream',
 
     'debug_toolbar',
     'corsheaders',
@@ -69,8 +71,9 @@ INSTALLED_APPS = [
     'apps.socialAuth',
     'apps.groups',
     'apps.posts',
-    'apps.pep'
-    # 'stream_framework',
+    'apps.pep',
+    'apps.notification',
+    'stream_framework',
     
 
     #Importing App Configs
@@ -98,6 +101,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_grip.GripMiddleware',
 ]
 
 ROOT_URLCONF = 'influence.urls'
@@ -266,14 +270,14 @@ GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")
 
 #stuff required for django-channels
 ASGI_APPLICATION = "influence.routing.application"
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('redis', 6379)], #TODO - changed for docker
-#         },
-#     },
-# }
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('localhost', 6379)], #TODO - changed for docker
+        },
+    },
+}
 
 #stuff required for caching
 CACHES = {
@@ -340,3 +344,8 @@ LOGGING = {
         'level': 'WARNING',
     },
 }   
+
+#For firebase cloud messaging
+FCM_DJANGO_SETTINGS = {
+        "FCM_SERVER_KEY": "AAAAcXcYYQw:APA91bGPVq3EIAc3rQd8SdrCQikl8vGFCRzZutSlX9Q8TPv_d2aUxNiTT34stBu5CSM5u8AIPPpHvfJDlnmYP17c2HR65nqZKQ_LLWGhLNIfNDjYn-n3Xx1XdQb2dRpA3uqXVodsHQvP"
+}

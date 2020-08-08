@@ -22,7 +22,7 @@ import uuid
 import pytz
 from guardian.shortcuts import assign_perm
 from django.utils.timezone import is_aware, make_naive
-from apps.friendship.models import followFeedManager, friendFeedManager
+from .tasks import after_posting_task
 # from apps.pep.models import Pep
 import random
 
@@ -315,11 +315,8 @@ def post_handler(sender, instance, **kwargs):
         # assign_perm('posts.change_comment', post.user, post)
         assign_perm('posts.delete_post', post.user, post)
         if not post.is_draft:
-            if post.privacy_type.lower() == 'friends':
-                friendFeedManager.add_post(post)
-            elif post.privacy_type.lower() == 'followers':
-                followFeedManager.add_post(post)
-                friendFeedManager.add_post(post)
+            after_posting_task.delay(post)
+            
             
 
 @receiver(post_delete, sender=Post)

@@ -104,6 +104,10 @@ class BaseStorage(object):
         serialized_activities = {}
         for activity in activities:
             serialized_activity = self.serialize_activity(activity)
+            print(activities)
+            print('inside serialzier activities')
+            print(self.serializer)
+            print(serialized_activity)
             serialized_activities[
                 self.activity_to_id(activity)] = serialized_activity
         return serialized_activities
