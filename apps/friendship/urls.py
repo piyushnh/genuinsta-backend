@@ -3,7 +3,7 @@ try:
 except ImportError:
     from django.conf.urls.defaults import url
 from django.urls import path
-from .views import view_friends, friendship_add_friend, friendship_accept, \
+from .views import view_friends, friendship_add_friend, \
     friendship_reject, friendship_cancel, friendship_request_list, \
     friendship_request_list_rejected, friendship_requests_detail, followers,\
     following, follower_add, follower_remove, all_users, friendship_requests_sent_list, remove_friend,\

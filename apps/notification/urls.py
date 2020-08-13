@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
 CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
-from .views import (notify,  set_fcm_token, get_notifications, mark_as_read)
+from .views import (notify,  set_fcm_token, get_notifications, mark_as_read, sendify)
 
 urlpatterns = [
     
@@ -25,6 +25,9 @@ urlpatterns = [
     path('markAsRead/',
             view = mark_as_read,
              name="mark_as_read" ),
+    path('sendify/',
+            view = sendify,
+             name="sendify" ),
   
 
     

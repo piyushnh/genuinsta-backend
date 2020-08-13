@@ -4,17 +4,7 @@ from asgiref.sync import async_to_sync
 class NotificationConsumer(JsonWebsocketConsumer):
     def connect(self):
         try:
-            self.user = self.scope['user']
-            # print('user')
-            # print(self.user)
-            self.group_name = self.user.group_name
-            # self.group_name = 'random_group'
-
-            # Join room group
-            async_to_sync(self.channel_layer.group_add)(
-                self.group_name,
-                self.channel_name
-            )
+            
 
             self.accept()
         except Exception as e:
@@ -29,18 +19,18 @@ class NotificationConsumer(JsonWebsocketConsumer):
         )
 
     # Receive message from WebSocket
-    # def receive(self, text_data):
-    #     text_data_json = json.loads(text_data)
-    #     message = text_data_json['message']
+    def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
 
-    #     # Send message to room group
-    #     async_to_sync(self.channel_layer.group_send)(
-    #         self.group_name,
-    #         {
-    #             'type': 'order_placed',
-    #             'message': message
-    #         }
-    #     )
+        # Send message to room group
+        async_to_sync(self.channel_layer.group_send)(
+            self.group_name,
+            {
+                'type': 'order_placed',
+                'message': message
+            }
+        )
 
     # Receive message from room group
     def notify(self, event):

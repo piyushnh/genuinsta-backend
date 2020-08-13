@@ -32,6 +32,7 @@ from firebase_admin import auth
 import os
 
 from apps.users.serializers import AuthUserSerializer
+from apps.notification.tasks import delete_fcm_token
 
 json = os.path.join(settings.KEYFILES_DIR, settings.FIREBASE_KEY)
 cred = credentials.Certificate(json)
@@ -198,7 +199,6 @@ def authenticate(request):
             pass
 
         if not id_token or not decoded_token:
-            print(e)
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -228,7 +228,11 @@ def authenticate(request):
 @permission_classes([IsAuthenticated])
 def logout(request):
     try:
+        data = request.data
+        if data and data['fcmToken']:
+            delete_fcm_token.delay(request.user.user_id, data['fcmToken'] )
         request.user.auth_token.delete()
+
         return Response({},status=status.HTTP_200_OK)
     except Exception as e:
         print(e)

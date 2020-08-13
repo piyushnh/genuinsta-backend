@@ -19,7 +19,7 @@ from django.utils.timezone import is_aware, make_naive
 import random
 import pytz
 from django.db.models.signals import post_save, post_delete
-from .tasks import notify_task
+# from .tasks import notify_task
 
 from stream_framework.verbs import register
 from stream_framework.verbs.base import Verb
@@ -45,16 +45,38 @@ class CommentVerb(Verb):
     infinitive = 'comment'
     past_tense = 'commented'
 
+class NominateVerb(Verb):
+    id = 10
+    infinitive = 'nominate'
+    past_tense = 'nominated'
+
+class TagVerb(Verb):
+    id = 11
+    infinitive = 'tag'
+    past_tense = 'tagged'
+
+class RecommendVerb(Verb):
+    id = 12
+    infinitive = 'recommend'
+    past_tense = 'recommended'
+
+
 register(FollowVerb)
 register(FriendRequestVerb)
 register(AcceptFriendVerb)
 register(CommentVerb)
+register(NominateVerb)
+register(TagVerb)
+register(RecommendVerb)
 
 getVerbDict = {
     'FRIEND_REQUEST_SENT': FriendRequestVerb,
     'FOLLOWED': FollowVerb,
     'FRIEND_REQUEST_ACCEPTED': AcceptFriendVerb,
-    'COMMENTED': CommentVerb
+    'COMMENTED': CommentVerb,
+    'NOMINATED': NominateVerb,
+    'RECOMMENDED': RecommendVerb,
+    'TAGGED': TagVerb,
 }
 
 
@@ -64,10 +86,13 @@ class Notification(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='sent_notifs',  )
     created_at = models.DateTimeField(auto_now_add=True, null=False)
     CATEGORY_CHOICES = (
-    ("FRIEND_REQUEST_SENT", "friend_request"),
+    ("FRIEND_REQUEST_SENT", "friend_request_sent"),
     ("FOLLOWING", "following"),
     ("FRIEND_REQUEST_ACCEPTED", "friend_request_accepted"),
     ("COMMENTED", "commented"),
+    ("NOMINATED", "nominated"),
+    ("RECOMMENDED", "recommended"),
+    ("TAGGED", "tagged"),
     )
     category = models.CharField(max_length=20,
                   choices=CATEGORY_CHOICES,
@@ -114,11 +139,11 @@ class Notification(models.Model):
         
         super().save(*args, **kwargs)
 
-@receiver(post_save, sender=Notification)
-def notif_handler(sender, instance, **kwargs):
-        notif = instance
-        # assign_perm('posts.change_comment', post.user, post)
-        # assign_perm('notification.delete_notification', notif.recipient, notif)
-        # if notif.type.lower() == 'notification':
-        notify_task.delay(notif)
+# @receiver(post_save, sender=Notification)
+# def notif_handler(sender, instance, **kwargs):
+#         notif = instance
+#         # assign_perm('posts.change_comment', post.user, post)
+#         # assign_perm('notification.delete_notification', notif.recipient, notif)
+#         # if notif.type.lower() == 'notification':
+#         notify_task.delay(notif)
 

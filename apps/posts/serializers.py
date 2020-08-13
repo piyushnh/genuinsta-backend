@@ -10,15 +10,24 @@ except ImportError:
 from .models import (Post, Like, Bookmark, Comment)
 from apps.users.serializers import UserProfileSerializer, UserSerializer
 
+class LightPostSerializer(serializers.ModelSerializer):
+    # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
+
+    class Meta:
+        model = Post
+        fields =  ('image', 'pep', 'post_id')
 
 
 class CommentSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
     comment_by = UserSerializer(read_only = True)
+    post = LightPostSerializer(read_only = True)
 
     class Meta:
         model = Comment
         fields =  '__all__'
+
+
 
 class PostSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
@@ -69,6 +78,11 @@ class PostSerializer(serializers.ModelSerializer):
 
         return Bookmark.objects.filter(post = post.post_id, user = user).exists()
 
+class LightPostSerializer(serializers.ModelSerializer):
+
+        class Meta:
+            model = Post
+        fields =('image', 'post_id', )
 
 class ActivitySerializer(serializers.Serializer):
     # id = serializers.UUIDField()

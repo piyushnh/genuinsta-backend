@@ -505,7 +505,7 @@ class FriendshipManager(models.Manager):
 
         bust_cache('requests', to_user.pk)
         bust_cache('sent_requests', from_user.pk)
-        friendship_request_created.send(sender=request)
+        # friendship_request_created.send(sender=request)
 
         return request
 

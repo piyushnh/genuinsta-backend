@@ -48,9 +48,18 @@ def set_fcm_token(request):
     try:
        
         data = request.data
-        device = FCMDevice.objects.get_or_create(user=request.user, registration_id=data['registration_token'], 
+        device, created = FCMDevice.objects.get_or_create(registration_id=data['registration_token'], 
                                     type='web')
-
+        if not created :
+            if not (device.user.user_id == request.user.user_id):
+                device.delete()
+                new_device = FCMDevice.objects.create(user=request.user, registration_id=data['registration_token'], 
+                                    type='web')
+            else:
+                pass
+        else:
+            device.user = request.user
+            device.save()
 
             
         return Response(status=status.HTTP_200_OK)
@@ -93,6 +102,22 @@ def mark_as_read(request):
         feed = MyNotificationFeed(request.user.user_id)
 
         feed.mark_activity(activity_id, read=True)
+
+
+        return Response(status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.exception(e)
+        return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
+def sendify(request):
+    # """
+    # """
+    try:
+        from django_eventstream import send_event
+
+        send_event('test', 'message', {'text': 'hello world'})
 
 
         return Response(status=status.HTTP_200_OK)

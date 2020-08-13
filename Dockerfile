@@ -26,12 +26,14 @@ RUN pip install -r requirements.txt
 
 RUN apt-get install -y libgdal-dev
 
+RUN apt-get install -y procps
+
 
 
 # RUN pip install --upgrade pip
 
 
-# RUN pip install asgi_redis
+RUN pip install aioredis==1.3.1
 
 
 # Copy the current directory contents into the container at /music_service

@@ -45,9 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.gis',
 
     #django-channels
-    'fcm_django',
     'channels',
-    'django_eventstream',
+    'fcm_django',
 
     'debug_toolbar',
     'corsheaders',
@@ -73,7 +72,7 @@ INSTALLED_APPS = [
     'apps.posts',
     'apps.pep',
     'apps.notification',
-    'stream_framework',
+    # 'stream_framework',
     
 
     #Importing App Configs
@@ -269,7 +268,7 @@ GEOIP_PATH = os.path.join(BASE_DIR, "GeoLite2-City.mmdb")
 
 
 #stuff required for django-channels
-ASGI_APPLICATION = "influence.routing.application"
+ASGI_APPLICATION = "influence.channels.routing.application"
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',

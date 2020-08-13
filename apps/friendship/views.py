@@ -22,6 +22,7 @@ from asgiref.sync import async_to_sync
 channel_layer = get_channel_layer()
 
 from apps.users.serializers import UserProfileSerializer
+from apps.notification.tasks import create_notif
 
 from .exceptions import AlreadyExistsError
 from .models import Friend, Follow, FriendshipRequest
@@ -51,8 +52,9 @@ def friendship_add_friend(request, to_username):
     from_user = request.user
     try:
         Friend.objects.add_friend(from_user, to_user)
-        # async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "friend.request.received", 'request_data': UserProfileSerializer(from_user).data})
-
+        # async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "notify", 'request_data': UserProfileSerializer(from_user).data})
+        create_notif.delay('FRIEND_REQUEST_SENT', 'NOTIFICATION',from_user.user_id, to_user
+        .user_id )
     except AlreadyExistsError as e:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
@@ -82,18 +84,6 @@ def get_friends_list(request):
     
 
 
-@login_required
-@api_view(['POST'])
-def friendship_accept(request, friendship_request_id):
-    """ Accept a friendship request """
-    if request.method == 'POST':
-        f_request = get_object_or_404(
-            request.user.friendship_requests_received,
-            id=friendship_request_id)
-        f_request.accept()
-        # return redirect('friendship:friendship_view_friends', username=request.user.username)
-
-    return Response(status=status.HTTP_202_ACCEPTED)
 
 @api_view(['POST'])
 @permission_classes((IsAuthenticated, ))
@@ -136,6 +126,10 @@ def friendship_request_accept(request, from_username):
     try:
         f_request = FriendshipRequest.objects.get(from_user = from_user, to_user = to_user)
         f_request.accept()
+
+        create_notif.delay('FRIEND_REQUEST_ACCEPETD', 'NOTIFICATION',to_user.user_id, from_user.user_id )
+
+
         return Response(None, status=status.HTTP_200_OK)
     except Exception as e:
         traceback.print_exc()
