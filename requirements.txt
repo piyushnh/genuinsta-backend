@@ -91,7 +91,8 @@ rsa==4.0
 six==1.12.0
 sorl-thumbnail==12.6.3
 sqlparse==0.2.4
-Twisted==19.7.0
+Twisted==20.3.0
+#earlier Twisted = 19.7.0 
 txaio==18.8.1
 typed-ast==1.4.1
 uritemplate==3.0.0
@@ -102,3 +103,4 @@ wrapt==1.11.2
 yarg==0.1.9
 zipp==1.2.0
 zope.interface==4.6.0
+ptvsd==4.3.2

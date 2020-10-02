@@ -101,8 +101,8 @@ class RedisTimelineStorage(BaseTimelineStorage):
         # turn it into key value pairs
         scores = map(long_t, activities.keys())
         score_value_pairs = list(zip(scores, activities.values()))
-        print('in timeline storage')
-        print(score_value_pairs)
+        # print('in timeline storage')
+        # print(score_value_pairs)
         result = cache.add_many(score_value_pairs)
         for r in result:
             # errors in strings?

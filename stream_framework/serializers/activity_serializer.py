@@ -24,8 +24,7 @@ class ActivitySerializer(BaseSerializer):
     def dumps(self, activity):
         self.check_type(activity)
         # keep the milliseconds
-        print('activitty is')
-        print(activity)
+
         activity_time = '%.6f' % datetime_to_epoch(activity.time)
         parts = [activity.actor_id, activity.verb.id,
                  activity.object_id, activity.target_id or 0]
@@ -38,8 +37,7 @@ class ActivitySerializer(BaseSerializer):
         parts += [activity_time, pickle_string]
         serialized_activity = ','.join(map(str, parts))
 
-        print('dumping brooooo')
-        print(serialized_activity)
+
         return serialized_activity
 
     def loads(self, serialized_activity):

@@ -7,7 +7,7 @@ try:
 except ImportError:
     from django.contrib.auth.models import User
 
-
+from django.contrib.contenttypes.fields import GenericRelation
 
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete
@@ -55,10 +55,15 @@ class TagVerb(Verb):
     infinitive = 'tag'
     past_tense = 'tagged'
 
-class RecommendVerb(Verb):
+class RecommendPostVerb(Verb):
     id = 12
-    infinitive = 'recommend'
-    past_tense = 'recommended'
+    infinitive = 'recommend_post'
+    past_tense = 'recommended_post'
+
+class RecommendPepVerb(Verb):
+    id = 13
+    infinitive = 'recommend_pep'
+    past_tense = 'recommended_pep'
 
 
 register(FollowVerb)
@@ -67,7 +72,8 @@ register(AcceptFriendVerb)
 register(CommentVerb)
 register(NominateVerb)
 register(TagVerb)
-register(RecommendVerb)
+register(RecommendPostVerb)
+register(RecommendPepVerb)
 
 getVerbDict = {
     'FRIEND_REQUEST_SENT': FriendRequestVerb,
@@ -75,7 +81,8 @@ getVerbDict = {
     'FRIEND_REQUEST_ACCEPTED': AcceptFriendVerb,
     'COMMENTED': CommentVerb,
     'NOMINATED': NominateVerb,
-    'RECOMMENDED': RecommendVerb,
+    'RECOMMENDED_POST': RecommendPostVerb,
+    'RECOMMENDED_PEP': RecommendPepVerb,
     'TAGGED': TagVerb,
 }
 
@@ -85,13 +92,15 @@ class Notification(models.Model):
     id = models.BigIntegerField(primary_key=True)
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='sent_notifs',  )
     created_at = models.DateTimeField(auto_now_add=True, null=False)
+    item_id = models.BigIntegerField()
     CATEGORY_CHOICES = (
     ("FRIEND_REQUEST_SENT", "friend_request_sent"),
     ("FOLLOWING", "following"),
     ("FRIEND_REQUEST_ACCEPTED", "friend_request_accepted"),
     ("COMMENTED", "commented"),
     ("NOMINATED", "nominated"),
-    ("RECOMMENDED", "recommended"),
+    ("RECOMMENDED_POST", "recommended_post"),
+    ("RECOMMENDED_PEP", "recommended_pep"),
     ("TAGGED", "tagged"),
     )
     category = models.CharField(max_length=20,
@@ -124,7 +133,7 @@ class Notification(models.Model):
             self.id,
             self.recipient.user_id,
             time=make_naive(self.created_at, pytz.utc),
-            # extra_context=dict(item_id=self.item_id)
+            extra_context=dict(item_id=self.item_id)
         )
         return activity
 

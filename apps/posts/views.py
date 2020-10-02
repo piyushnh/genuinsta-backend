@@ -6,6 +6,8 @@ from django.core import serializers
 from django.db.models import OuterRef, Subquery, Count
 import json
 from rest_framework.decorators import api_view, permission_classes
+from apps.notification.tasks import create_notif
+
 
 
 
@@ -63,7 +65,7 @@ def get_post(request, postId):
         # commentsDetails = Subquery(comments.values('comment_id'))
         post = Post.objects.get(post_id = postId)
         
-        serializer = PostSerializer(post, context={'request': request})
+        serializer = PostSerializer(post, context={'user': request.user})
         return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
         print(e)
@@ -77,7 +79,7 @@ def get_user_posts(request, userId):
     try:
        
         posts = Post.objects.get(user = userId)
-        data = PostSerializer(posts, many = True, context={'request': request}).data
+        data = PostSerializer(posts, many = True, context={'user': request.user}).data
        
         return Response(data,status=status.HTTP_200_OK)
     except Exception as e:
@@ -95,7 +97,7 @@ def get_user_bookmarks(request, userId):
        
         post = Post.objects.filter(post_id__in = Bookmark.objects.filter(user__user_id = userId).values('post')).annotate( likesCount = Count('likes'), 
                              commentsCount = Count('comments') )
-        data = PostSerializer(post, many=True, context={'request': request}).data
+        data = PostSerializer(post, many=True, context={'user': request.user}).data
        
         return Response(data,status=status.HTTP_200_OK)
     except Exception as e:
@@ -164,7 +166,7 @@ def publish_post(request):
         if nomineeList:
             post.nominees.add(*nomineeList)
         # post.save()    
-        serializer = PostSerializer(post, context={'request': request})
+        serializer = PostSerializer(post, context={'user': request.user})
         return Response(serializer.data ,status=status.HTTP_200_OK)
     except Exception as e:
         # logging.debug('Error')
@@ -254,10 +256,10 @@ def get_timeline(request, pageSize, lastId='', ):
         #      data.append(activity.activity_data)
 
         if len(data) > 1:
-            serializer = ActivitySerializer(data,  context={'request': request}, many = True)
+            serializer = ActivitySerializer(data,  context={'user': request.user}, many = True)
             responseData = serializer.data
         elif len(data) == 1:
-            serializer = ActivitySerializer(data[0],  context={'request': request})
+            serializer = ActivitySerializer(data[0],  context={'user': request.user})
             responseData = [serializer.data]
         else:
             return Response([], status=status.HTTP_200_OK)
@@ -275,6 +277,7 @@ def publish_comment(request, postId):
         data = request.data
         post = Post.objects.get(post_id = postId)
         comment = post.comments.create(comment_by=request.user, comment_type='text', text=data['text'])
+        create_notif.delay('COMMENTED', 'NOTIFICATION',comment.post.user_id, comment.comment_by_id, comment.comment_id)
         serializer = CommentSerializer(comment)
         return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
@@ -332,7 +335,7 @@ def get_post_comments(request, postId):
        
         comments = Post.objects.get(post_id = postId).comments
         
-        serializer = CommentSerializer(comments, context={'request': request})
+        serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     except Exception as e:
         print(e)

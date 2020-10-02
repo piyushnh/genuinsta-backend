@@ -6,6 +6,8 @@ def validate_type_strict(object_, object_types):
     :param object_: the object to check
     :param object_types: the desired type of the object (or tuple of types)
     '''
+
+
     if not isinstance(object_types, tuple):
         object_types = (object_types,)
     exact_type_match = any([type(object_) == t for t in object_types])
@@ -30,5 +32,6 @@ def validate_list_of_strict(object_list, object_types):
     We use it in cases where you can configure the type of class to use
     And where we should validate that you are infact supplying that class
     '''
+
     for object_ in object_list:
         validate_type_strict(object_, object_types)

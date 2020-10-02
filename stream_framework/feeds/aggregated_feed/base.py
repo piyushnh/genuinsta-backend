@@ -86,6 +86,7 @@ class AggregatedFeed(BaseFeed):
 
         t = timer()
         # get the current aggregated activities
+
         if current_activities is None:
             current_activities = self[:self.merge_max_length]
         msg_format = 'reading %s items took %s'

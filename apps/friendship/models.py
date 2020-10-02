@@ -130,7 +130,6 @@ def after_following_task(follower_id, followee_id):
 
         # follower_timeline.follow(followee_feed.slug, followee_feed.user_id) 
         followFeedManager.follow_feed(follower_timeline, followee_feed) 
-        Notification.objects.create(user = follower_id, recipient=followee_id, category_type='FOLLOWING')
 
 
 

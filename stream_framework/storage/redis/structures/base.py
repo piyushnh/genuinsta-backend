@@ -51,7 +51,7 @@ class RedisCache(object):
         '''
         pipe_needed = not isinstance(self.redis, Pipeline)
         if pipe_needed:
-            print('in pipeline needed')
+            # print('in pipeline needed')
             pipe = self.redis.pipeline(transaction=False)
             operation(pipe, *args, **kwargs)
             results = pipe.execute()

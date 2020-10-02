@@ -18,6 +18,11 @@ urlpatterns = [
         name='get_friends_list',
     ),
     url(
+        regex=r'^getFriendRequestsList/$',
+        view=friendship_request_list,
+        name='friendship_request_list',
+    ),
+    url(
         regex=r'^users/$',
         view=all_users,
         name='friendship_view_users',
@@ -47,11 +52,7 @@ urlpatterns = [
         view=friendship_request_cancel,
         name='friendship_request_cancel',
     ),
-    url(
-        regex=r'^friend/requests/$',
-        view=friendship_request_list,
-        name='friendship_request_list',
-    ),
+  
     url(
         regex=r'^friend/sent_requests/$',
         view=friendship_requests_sent_list,

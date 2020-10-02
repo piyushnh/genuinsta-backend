@@ -5,8 +5,6 @@ class NotificationConsumer(JsonWebsocketConsumer):
     def connect(self):
         try:
             self.user = self.scope['user']
-            # print('user')
-            # print(self.user)
             self.group_name = self.user.group_name
             # self.group_name = 'random_group'
 

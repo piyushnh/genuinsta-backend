@@ -11,6 +11,8 @@ from .models import (Notification)
 from apps.users.serializers import UserProfileSerializer, UserSerializer
 from apps.posts.serializers import CommentSerializer, PostSerializer
 from apps.posts.models import Comment, Post
+from apps.friendship.models import FriendshipRequest
+from apps.friendship.serializers import FriendshipRequestSerializer
 
 class NotificationSerializer(serializers.ModelSerializer):
     # menu = MenuSerializer(read_only=True,many=True,) #method to include foreign relations
@@ -38,18 +40,24 @@ class NotifActivitySerializer(serializers.Serializer):
 
     def get_item(self, activity):
         verb_id = activity.verb.id
-        object_id = activity.object_id
-        if verb_id == 9 : #when commented
-            comment = Comment.objects.get(comment_id = object_id).data
-            return CommentSerializer(comment)
-        if verb_id == 11 or verb_id == 12: #when recommend post or tag
-            post = Post.objects.get(post_id = post_id)
-            return PostSerializer(post, context=self.context).data
-        if verb_id == 13: #when recommend pep
-            pep = Pep.objects.get(id=object_id)
-            return PepSerializer(pep).data
-        
-        return None
+        try:
+            item_id = activity.extra_context['item_id']
+            if verb_id == 7: #when friend request
+                friendRequest = FriendshipRequest.objects.get(id = item_id)
+                return FriendshipRequestSerializer(friendRequest).data
+            if verb_id == 9 : #when commented
+                comment = Comment.objects.get(comment_id = item_id)
+                return CommentSerializer(comment).data
+            if verb_id == 11 or verb_id == 12: #when recommend post or tag
+                post = Post.objects.get(post_id = post_id)
+                return PostSerializer(post, context=self.context).data
+            if verb_id == 13: #when recommend pep
+                pep = Pep.objects.get(id=item_id)
+                return PepSerializer(pep).data
+            
+            return None
+        except:
+            return None
 
 
 
@@ -57,15 +65,22 @@ class AggregatedActivitySerializer(serializers.Serializer):
     is_read = serializers.BooleanField()
     is_seen = serializers.BooleanField()
     # time = serializers.DateTimeField()
-    type = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
     activities = serializers.SerializerMethodField()
 
-    def get_type(self, activity):
+    def get_category(self, activity):
         verb_dict = {
             7:'FRIEND_REQUEST_SENT',
             6:'FOLLOWED',
             8:'FRIEND_REQUEST_ACCEPTED',
-            9:'COMMENTED'
+            9:'COMMENTED',
+            10: 'NOMINATED',
+            11: 'TAGGED',
+            12: 'RECOMMENDED_POST',
+            13: 'RECOMMENDED_PEP',
+
+
+
         }
         return verb_dict[activity.verb.id]
 

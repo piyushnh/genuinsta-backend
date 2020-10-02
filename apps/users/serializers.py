@@ -77,22 +77,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
     #         return that_user.profile_picture_url
 
     def get_isFollowing(self, that_user, **kwargs):
-        request = self.context.get('request')
-        this_user = request.user
+        this_user = self.context.get('user')
         
 
         return Follow.objects.follows(follower =  this_user, followee = that_user )
 
     def get_friendshipStatus(self, that_user, **kwargs):
-        request = self.context.get('request')
-        this_user = request.user
+        this_user = self.context.get('user')
         
 
         return Friend.objects.friendship_status(this_user =  this_user, other_user = that_user )
 
     def get_sentFriendRequestId(self, that_user, **kwargs):
-        request = self.context.get('request')
-        this_user = request.user
+        this_user = self.context.get('user')
 
         try:
             return FriendshipRequest.objects.get(from_user =  this_user, to_user = that_user ).id
@@ -100,8 +97,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             return ''
 
     def get_receivedFriendRequestId(self, that_user, **kwargs):
-        request = self.context.get('request')
-        this_user = request.user
+        this_user = self.context.get('user')
 
         try:
             return FriendshipRequest.objects.get(from_user =  that_user, to_user = this_user ).id

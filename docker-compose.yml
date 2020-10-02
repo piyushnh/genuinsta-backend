@@ -8,9 +8,10 @@ services:
     container_name: genuinstagram_backend
     volumes:
       - .:/genuinstagram_backend
-      - .:/genuinsta_backend
+      # - .:/genuinsta_backend
     ports:
       - 8000:8000
+      - 7913:7913
     depends_on:
       - db
       - redis
@@ -43,9 +44,9 @@ services:
       - C_FORCE_ROOT=true
     volumes:
       - .:/genuinstagram_backend
-      - .:/genuinsta_backend
+      # - .:/genuinsta_backend
     depends_on:
-      - web
+      # - web
       - db
       - redis
     

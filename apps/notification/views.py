@@ -75,7 +75,7 @@ def get_notifications(request):
     # """
     try:
         data = MyNotificationFeed(request.user.user_id)[:]
-        print(data)
+        # print(data[0].serialization_id)
 
         if len(data) > 1:
             serializer = AggregatedActivitySerializer(data,  context={'request': request}, many = True)
@@ -101,7 +101,7 @@ def mark_as_read(request):
         activity_id = data['activityId']
         feed = MyNotificationFeed(request.user.user_id)
 
-        feed.mark_activity(activity_id, read=True)
+        feed.mark_activity(activity_id, seen=True)
 
 
         return Response(status=status.HTTP_200_OK)

@@ -74,24 +74,34 @@ class BaseAggregator(object):
                 print 'changed from %s to %s' % (from, to)
 
         '''
-        current_activities_dict = dict([(a.group, a) for a in aggregated])
+  
+
+        current_activities_dict = dict([(a.group, a) for a in aggregated if a.is_seen == False])
         new = []
         changed = []
         new_aggregated = self.aggregate(activities)
         for aggregated in new_aggregated:
+
             if aggregated.group not in current_activities_dict:
                 new.append(aggregated)
             else:
                 current_aggregated = current_activities_dict.get(
                     aggregated.group)
-                new_aggregated = deepcopy(current_aggregated)
-                for activity in aggregated.activities:
-                    try:
-                        new_aggregated.append(activity)
-                    except DuplicateActivityException:
-                        pass
-                if current_aggregated.activities != new_aggregated.activities:
-                    changed.append((current_aggregated, new_aggregated))
+         
+                if current_aggregated.is_seen:
+                    new.append(aggregated) 
+                else:
+                    existing_aggregated = deepcopy(current_aggregated)
+
+    
+                    for activity in aggregated.activities:
+                        try:
+                            existing_aggregated.append(activity)
+                        except DuplicateActivityException:
+                            pass
+                    if current_aggregated.activities != existing_aggregated.activities:
+                        changed.append((current_aggregated, existing_aggregated))
+            
         return new, changed, []
 
     def group_activities(self, activities):
@@ -99,6 +109,8 @@ class BaseAggregator(object):
         Groups the activities based on their group
         Found by running get_group(actvity on them)
         '''
+
+
         aggregate_dict = dict()
         # make sure that if we aggregated multiple activities
         # they end up in serialization_id desc in the aggregated activity

@@ -32,13 +32,14 @@ logger = get_task_logger(__name__)
 #         print(e)
 
 @task(name="create_notif")
-def create_notif(category, type, from_user_id, recipient_id):
+def create_notif(category, type, from_user_id, recipient_id, item_id):
     try:
 
         from_user = User.objects.get(user_id=from_user_id)
         to_user = User.objects.get(user_id=recipient_id)
-
-        notif = Notification.objects.create(category=category, type=type, user=from_user, recipient=to_user)
+        print('item -id')
+        print(item_id)
+        notif = Notification.objects.create(category=category, type=type, user=from_user, recipient=to_user, item_id=item_id)
         
         if type == 'NOTIFICATION':
             devices = FCMDevice.objects.filter(user=notif.recipient)

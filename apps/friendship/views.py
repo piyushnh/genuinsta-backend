@@ -51,10 +51,10 @@ def friendship_add_friend(request, to_username):
     to_user = user_model.objects.get(username=to_username)
     from_user = request.user
     try:
-        Friend.objects.add_friend(from_user, to_user)
+        friend_request = Friend.objects.add_friend(from_user, to_user)
         # async_to_sync(channel_layer.group_send)(to_user.group_name, {"type": "notify", 'request_data': UserProfileSerializer(from_user).data})
         create_notif.delay('FRIEND_REQUEST_SENT', 'NOTIFICATION',from_user.user_id, to_user
-        .user_id )
+        .user_id, friend_request.id )
     except AlreadyExistsError as e:
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
@@ -127,7 +127,7 @@ def friendship_request_accept(request, from_username):
         f_request = FriendshipRequest.objects.get(from_user = from_user, to_user = to_user)
         f_request.accept()
 
-        create_notif.delay('FRIEND_REQUEST_ACCEPETD', 'NOTIFICATION',to_user.user_id, from_user.user_id )
+        create_notif.delay('FRIEND_REQUEST_ACCEPTED', 'NOTIFICATION',to_user.user_id, from_user.user_id )
 
 
         return Response(None, status=status.HTTP_200_OK)
@@ -161,8 +161,8 @@ def friendship_cancel(request, friendship_request_id):
     return Response(status=status.HTTP_200_OK)
 
 
-@login_required
 @api_view(['GET'])
+@permission_classes((IsAuthenticated, ))
 def friendship_request_list(request):
     """ View unread and read friendship requests """
     # friendship_requests = Friend.objects.requests(request.user)
@@ -234,7 +234,8 @@ def follower_add(request,username):
         followee_username = username
         followee = user_model.objects.get(username=followee_username)
         follower = request.user
-        Follow.objects.add_follower(follower, followee)
+        follow_relation = Follow.objects.add_follower(follower, followee)
+        create_notif.delay('FOLLOWING', 'DATA', follower.user_id, followee.user_id, follow_relation.id )
         return Response(None, status=status.HTTP_200_OK)
 
     except Exception as e:

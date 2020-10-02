@@ -19,8 +19,18 @@ from django.conf.urls import url, include
 from django.conf import settings
 from . import views
 from django.conf.urls.static import static
+# from django.conf import settings
+# import os 
 
+# if settings.DEBUG:
 
+#     if os.environ.get('RUN_MAIN') or os.environ.get('WERKZEUG_RUN_MAIN'):
+#         import ptvsd
+
+#         print('hiiiiiiiiiiiiiiiiiiiiiiiiiii')
+
+#         ptvsd.enable_attach(address=('localhost', 7913))
+#         print('Debugger Attached!')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

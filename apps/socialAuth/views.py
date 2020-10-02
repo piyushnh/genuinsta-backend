@@ -203,26 +203,30 @@ def authenticate(request):
 
 
         uid = decoded_token.get('uid')
+        
         try:
-            user = User.objects.get(social_id=uid)
-        except:
-            user = User(social_id=uid)
-            try:
-                name = data['fullName'].split()    
-                user.first_name = name[0]
-                user.last_name = name[1]
-            except Exception as e:
-                user.first_name = data['fullName']
-            user.email = data['email']
-            user.username = data['email']
-            # user.avatar_url = data['avatar']  
-            user.profile_picture_url = data['avatar']
-            user.mobile_number = ''  
-            user.save()
+            user, created = User.objects.get_or_create(social_id=uid)
+            if created:
+                # user = User(social_id=uid)
+                try:
+                    name = data['fullName'].split()    
+                    user.first_name = name[0]
+                    user.last_name = name[1]
+                except Exception as e:
+                    user.first_name = data['fullName']
+                user.email = data['email']
+                user.username = data['email']
+                # user.avatar_url = data['avatar']  
+                user.profile_picture_url = data['avatar']
+                user.mobile_number = ''  
+                user.save()
 
-        token, _ = Token.objects.get_or_create(user=user)
-        user_serializer = AuthUserSerializer(user)    
-        return Response( {'token': token.key, 'user': user_serializer.data},status=status.HTTP_200_OK)
+            token, _ = Token.objects.get_or_create(user=user)
+            user_serializer = AuthUserSerializer(user)    
+            return Response( {'token': token.key, 'user': user_serializer.data},status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -235,7 +239,7 @@ def logout(request):
 
         return Response({},status=status.HTTP_200_OK)
     except Exception as e:
-        print(e)
+        
         return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

@@ -11,7 +11,7 @@ ENV PYTHONUNBUFFERED 1
 RUN mkdir /genuinstagram_backend
 
 # Set the working directory to /music_service
-WORKDIR /genuinsta_backend
+WORKDIR /genuinstagram_backend
 
 
 RUN apt-get update 
@@ -24,7 +24,7 @@ RUN pip install --upgrade pip
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt
 
-RUN apt-get install -y libgdal-dev
+# RUN apt-get install -y libgdal-dev
 
 RUN apt-get install -y procps
 
@@ -33,8 +33,9 @@ RUN apt-get install -y procps
 # RUN pip install --upgrade pip
 
 
-RUN pip install aioredis==1.3.1
+RUN pip install Twisted==19.7.0
+
 
 
 # Copy the current directory contents into the container at /music_service
-COPY . /genuinsta_backend/
+COPY . /genuinstagram_backend/

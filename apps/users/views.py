@@ -77,7 +77,7 @@ def get_user_profile(request, userName):
         this_user = request.user
         other_user = User.objects.get(username = userName)
 
-        serialized_profile = UserProfileSerializer(other_user, context={'request': request})
+        serialized_profile = UserProfileSerializer(other_user, context={'user': request.user})
         # IMPORTANT to first assign it to a variable, coz modifying serialized_profile.data 
         # directly doesn't work
         data = serialized_profile.data
@@ -116,7 +116,7 @@ def get_owner_profile(request):
         # print(request)
         user = request.user
 
-        serializedProfile = UserProfileSerializer(user,  context={'request': request})
+        serializedProfile = UserProfileSerializer(user,  context={'user': request.user})
         return Response(serializedProfile.data,status=status.HTTP_200_OK)
     except Exception as e:
         print(e)

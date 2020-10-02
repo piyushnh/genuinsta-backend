@@ -17,6 +17,7 @@ from sorl.thumbnail import  get_thumbnail
 from smartfields import fields
 from smartfields.dependencies import FileDependency
 from smartfields.processors import ImageProcessor
+
 import re
 import uuid
 import pytz
@@ -268,6 +269,7 @@ class Comment(models.Model):
     #In case of sticker or image, the url will be in this 
     commentSrc = models.ImageField(upload_to='comment_images_stickers')
      
+    
 
     def __str__(self):
         return str(self.comment_id)
@@ -305,9 +307,12 @@ class Bookmark(models.Model):
 @receiver(post_save, sender=Comment)
 def comment_handler(sender, instance, **kwargs):
         comment = instance
+        
         assign_perm('posts.delete_comment', comment.comment_by, comment)
         assign_perm('posts.delete_comment', comment.post.user, comment)
         assign_perm('posts.change_comment', comment.comment_by, comment)
+
+        
 
 @receiver(post_save, sender=Post)
 def post_handler(sender, instance, **kwargs):

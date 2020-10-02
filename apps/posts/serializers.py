@@ -8,6 +8,7 @@ except ImportError:
     from django.contrib.auth.models import User
 
 from .models import (Post, Like, Bookmark, Comment)
+
 from apps.users.serializers import UserProfileSerializer, UserSerializer
 
 class LightPostSerializer(serializers.ModelSerializer):
@@ -67,14 +68,13 @@ class PostSerializer(serializers.ModelSerializer):
         return post.comments.count()
 
     def get_liked_or_not(self, post, **kwargs):
-        request = self.context.get('request')
-        user = request.user
+        user = self.context.get('user')
+        # user = request.user
 
         return Like.objects.filter(post = post.post_id, user = user).exists()
 
     def get_bookmarked_or_not(self, post, **kwargs):
-        request = self.context.get('request')
-        user = request.user
+        user = self.context.get('user')
 
         return Bookmark.objects.filter(post = post.post_id, user = user).exists()
 

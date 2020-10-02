@@ -280,25 +280,28 @@ class AggregatedActivity(BaseActivity):
         return activity_id in set([a.serialization_id for a in self.activities])
 
     def append(self, activity):
-        if self.contains(activity):
-            raise stream_framework_exceptions.DuplicateActivityException()
+            if self.contains(activity):
+                raise stream_framework_exceptions.DuplicateActivityException()
 
-        # append the activity
-        self.activities.append(activity)
+            # append the activity
+            self.activities.append(activity)
 
-        # set the first seen
-        if self.created_at is None:
-            self.created_at = activity.time
+            # set the first seen
+            if self.created_at is None:
+                self.created_at = activity.time
 
-        # set the last seen
-        if self.updated_at is None or activity.time > self.updated_at:
-            self.updated_at = activity.time
+            # set the last seen
+            if self.updated_at is None or activity.time > self.updated_at:
+                self.updated_at = activity.time
 
-        # ensure that our memory usage, and pickling overhead don't go up
-        # endlessly
-        if len(self.activities) > self.max_aggregated_activities_length:
-            self.activities.pop(0)
-            self.minimized_activities += 1
+            # ensure that our memory usage, and pickling overhead don't go up
+            # endlessly
+            if len(self.activities) > self.max_aggregated_activities_length:
+                self.activities.pop(0)
+                self.minimized_activities += 1
+
+            # print('finished')
+    
 
     def remove(self, activity):
         if not self.contains(activity):
